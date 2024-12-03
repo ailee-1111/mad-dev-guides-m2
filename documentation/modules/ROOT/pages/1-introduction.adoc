@@ -1,6 +1,6 @@
-== 1. Workshop Environment
+== Workshop Environment
 
-=== 1.1.1 사용자 이름을 확인하세요!
+=== 사용자 이름을 확인하세요!
 
 오른쪽 화면 상단의 상자를 살펴보세요.  사용자 이름이 이미 설정되어 있습니까?  그렇다면 다음과 같이 보일 것입니다.:
 
@@ -10,14 +10,14 @@ image::alreadyset.png[alreadyset]
 
 image::setuser.png[setuser]
 
-그러면 이 워크숍에 대한 링크와 코드 복사/붙여넣기가 맞춤설정됩니다.  실수로 잘못된 사용자 이름을 입력한 경우 URL 매개변수에서 사용자 이름을 업데이트하세요. (e.g. ` 1-introduction.html?USERID=%USERID% ` )
+그러면 이 워크숍에 대한 링크와 코드 복사/붙여넣기가 맞춤설정됩니다.
 
 [IMPORTANT]
 ====
 실습을 진행하는 동안 *고유한 사용자 이름(e.g. `%USERID%`) *을 사용해야 합니다.  예를 들어, 자신의 고유한 ID가 포함된 프로젝트에 애플리케이션을 배포해야 합니다. (e.g. retail-%USERID%).
 ====
 
-=== 1.1.2. OpenShift Cluster
+=== OpenShift Cluster
 
 OpenShift 클러스터는 필요한 모든 항목으로 이미 구성되어 있습니다.  자세한 내용은 다음과 같습니다.:
 
