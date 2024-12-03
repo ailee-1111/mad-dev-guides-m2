@@ -1,1 +1,299 @@
+= Rolling updates
+
+Make sure you are in the correct namespace
+
+:section-k8s: rolling
+:set-namespace: myspace
+include::partial$set-context.adoc[]
+
+[TIP,subs="attributes+,+macros"]
+====
+If you just came from xref::resources.adoc[the Resources and Limits section, window=_blank] then you should already have the pods and deployments active that you need.  If not, you will need run the following commands to deploy the needed elements into {set-namespace}
+====
+
+Deploy the Spring Boot app if needed:
+
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl apply -f apps/kubefiles/myboot-deployment-resources-limits.yml
+kubectl apply -f apps/kubefiles/myboot-service.yml
+----
+
+*Terminal 1*: watch the Pods.
+
+include::partial$watching-pods.adoc[]
+
+*Terminal 2*: curl loop the service.
+
+:service-exposed: myboot
+
+include::partial$env-curl.adoc[]
+
+And run loop script:
+
+include::partial$loop.adoc[]
+
+
+*Terminal 3* : Run commands.
+
+Describe (or `kubectl edit`) the Deployment:
+
+:describe-deployment-name: myboot
+:section-k8s: rolling-init
+
+include::partial$describe-deployment.adoc[]
+
+// The .no-query-replace tells the course ui to not attempt to replace tokens between % %
+[.no-query-replace]
+[.console-output]
+[source,bash]
+----
+.
+.
+.
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+.
+.
+.
+----
+
+`StrategyType` options include `RollingUpdate` and `Recreate`:
+
+Change the replicas:
+
+include::partial$tip_vscode_kube_editor.adoc[]
+
+[#edit-deployment-replicas-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl edit deployment myboot
+----
+
+Look for "replicas":
+
+[.console-output]
+[source,yaml]
+----
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: myboot
+----
+
+And update to "2":
+
+[.console-output]
+[source, yaml]
+----
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: myboot
+----
+
+Save and close your editor and a new pod will come to life:
+
+[#edit-deployment-replicas-get-pod-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl get pods
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                     READY   STATUS    RESTARTS   AGE
+myboot-d78fb6d58-2fqml   1/1     Running   0          25s
+myboot-d78fb6d58-ljkjp   1/1     Running   0          3m
+----
+
+Change the image associated with the deployment:
+
+[#edit-deployment-v2-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl edit deployment myboot
+----
+
+Find the image attribute:
+
+[source, yaml]
+----
+    spec:
+      containers:
+      - image: quay.io/rhdevelopers/myboot:v1
+        imagePullPolicy: IfNotPresent
+        name: myboot
+----
+
+and change the image `myboot:v2`:
+
+[source, yaml]
+----
+    spec:
+      containers:
+      - image: quay.io/rhdevelopers/myboot:v2
+        imagePullPolicy: IfNotPresent
+        name: myboot
+----
+
+[#edit-deployment-v2-get-pod-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl get pods
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                      READY   STATUS              RESTARTS   AGE
+myboot-7fbc4b97df-4ntmk   1/1     Running             0          9s
+myboot-7fbc4b97df-qtkzj   0/1     ContainerCreating   0          0s
+myboot-d78fb6d58-2fqml    1/1     Running             0          3m29s
+myboot-d78fb6d58-ljkjp    1/1     Terminating         0          8m
+----
+
+And the output from terminal 2:
+
+[.console-output]
+[source,bash]
+----
+Aloha from Spring Boot! 211 on myboot-d78fb6d58-2fqml
+Aloha from Spring Boot! 212 on myboot-d78fb6d58-2fqml
+Bonjour from Spring Boot! 0 on myboot-7fbc4b97df-4ntmk
+Bonjour from Spring Boot! 1 on myboot-7fbc4b97df-4ntmk
+----
+
+Check the status of the deployment:
+
+[#rollout-v2-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl rollout status deployment myboot
+----
+
+[.console-output]
+[source,bash]
+----
+deployment "myboot" successfully rolled out
+----
+
+Notice that there is a new RS:
+
+[#rs-v2-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl get rs
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                DESIRED   CURRENT   READY   AGE
+myboot-7fbc4b97df   2         2         2       116s
+myboot-d78fb6d58    0         0         0       10m
+----
+
+Describe the Deployment:
+
+
+:describe-deployment-name: myboot
+:section-k8s: rolling
+
+include::partial$describe-deployment.adoc[]
+
+And check out the Events section:
+
+[.console-output]
+[source,bash]
+----
+...
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  16m    deployment-controller  Scaled up replica set myboot-d78fb6d58 to 1
+  Normal  ScalingReplicaSet  6m15s  deployment-controller  Scaled up replica set myboot-d78fb6d58 to 2
+  Normal  ScalingReplicaSet  2m55s  deployment-controller  Scaled up replica set myboot-7fbc4b97df to 1
+  Normal  ScalingReplicaSet  2m46s  deployment-controller  Scaled down replica set myboot-d78fb6d58 to 1
+  Normal  ScalingReplicaSet  2m46s  deployment-controller  Scaled up replica set myboot-7fbc4b97df to 2
+  Normal  ScalingReplicaSet  2m37s  deployment-controller  Scaled down replica set myboot-d78fb6d58 to 0
+----
+
+You can list the revisions associated to your deployment by running the following command:
+[#rollout-history]
+[.console-input]
+[source, bash]
+----
+kubectl rollout history deployment/myboot
+----
+
+You can rollback to v1 using the following command:
+
+[#describe-rollback-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl rollout undo deployment/myboot --to-revision=1
+----
+
+And it rolls back to Aloha:
+
+[.console-output]
+[source,bash]
+----
+Bonjour from Spring Boot! 501 on myboot-7fbc4b97df-qtkzj
+Bonjour from Spring Boot! 502 on myboot-7fbc4b97df-qtkzj
+Aloha from Spring Boot! 0 on myboot-d78fb6d58-vnlch
+----
+
+[IMPORTANT] 
+====
+On minikube, you may receive errors from curl during the rollover activity.
+
+[.console-output]
+[source,bash]
+----
+Aloha from Spring Boot! 119 on myboot-d78fb6d58-2zp4h
+curl: (7) Failed to connect to 192.168.99.100 port 31528: Connection refused
+----
+
+The reason is the the missing Live and Ready Probes
+
+Try using the Quarkus image instead of the Spring Boot one
+
+[#describe-rollback-quarkus-rolling]
+[.console-input]
+[source, bash]
+----
+kubectl set image deployment/myboot myboot=quay.io/rhdevelopers/quarkus-demo:v1
+----
+
+And there should be no errors, Quarkus simply boots up crazy fast
+
+[.console-output]
+[source,bash]
+----
+Aloha from Spring Boot! 62 on myboot-d78fb6d58-smb7h
+Aloha from Spring Boot! 63 on myboot-d78fb6d58-smb7h
+Supersonic Subatomic Java with Quarkus myboot-5cf696848b-tlt6l:1
+Supersonic Subatomic Java with Quarkus myboot-5cf696848b-tlt6l:2
+----
+====
 
