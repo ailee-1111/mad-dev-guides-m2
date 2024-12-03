@@ -1,16 +1,5 @@
-#* xref:1-introduction.adoc[Lab환경]
-#* xref:2-beginner.adoc[초보자]
-#* xref:3-elementary.adoc[초급]
-#* xref:4-intermediate.adoc[중급]
-#* xref:5-advanced.adoc[고급]
-
-
-
 * 1. Lab환경
 ** xref:1-introduction.adoc[Lab환경설명]
-#*** xref:installation.adoc#tutorial-all-local[CLI]
-#*** xref:installation.adoc#install-minikube[Install Minikube]
-#*** xref:installation.adoc#start-kubernetes[Start Kubernetes]
 
 * 2. 초보자
 ** xref:2-1-kubectl.adoc[kubectl/oc]
