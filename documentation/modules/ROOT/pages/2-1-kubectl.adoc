@@ -1,15 +1,17 @@
-= kubectl: The Kubernetes Client
+= kubectl/oc: 쿠버네티스 클라이언트
 
 [[talk]]
-== Talk to your Cluster
+== 클러스터에 로그인하고, 설정을 확인하세요.
 [#kubectl-view-config]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-echo $KUBECONFIG
 kubectl config view
 ----
 
+> [!NOTE]
+> `Getting started resources` 패널이 표시되면, 
+<br>
 
 [[view-nodes]]
 == View Nodes
