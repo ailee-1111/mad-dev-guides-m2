@@ -1,3 +1,4 @@
-* xref:1-introduction.adoc[Introduction]
-* xref:2-refactor.adoc[Refactor]
-* xref:3-deploy-to-kubernetes.adoc[Deploy to Kubernetes]
+* xref:1-introduction.adoc[Beginner]
+* xref:2-refactor.adoc[Elementary]
+* xref:3-deploy-to-kubernetes.adoc[Intermediate]
+* xref:4-kubernetes.adoc[Advanced]
