@@ -1,182 +1,324 @@
-= 3. Deploy to Kubernetes - 10 minutes
-:imagesdir: ../assets/images
+= Pod, ReplicaSet, Deployment
 
-== Goals of this lab
+First create a namespace to work in:
 
-The goal of this exercise is to build and deploy the modernized customer application to OpenShift using link:https://access.redhat.com/documentation/en-us/openshift_container_platform/4.11/html-single/cicd/index#builds-binary-source_creating-build-inputs[OpenShift Binary Build and Deployment^].
+[#create-namespace]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl create namespace myspace
+kubectl config set-context --current --namespace=myspace
+----
 
-You will:
+== Pod
 
-* Use the OpenShift binary build strategy to build and deploy the new, modernized application using Red Hat JBoss Web Server instead of Apache Tomcat as the runtime.
-* Test the new *customers* service
+Create a https://kubernetes.io/docs/concepts/configuration/overview/#naked-pods-vs-replicasets-deployments-and-jobs[naked pod]:
 
-== 3.1. Create a new project
+[#create-pod]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: quarkus-demo
+spec:
+  containers:
+  - name: quarkus-demo
+    image: quay.io/rhdevelopers/quarkus-demo:v1
+EOF
+----
 
-[IMPORTANT]
-====
-In case you haven't already logged in to the OpenShift cluster, run the following `oc` command in VS Code server terminal.
+Watch the pod lifecycle:
 
+[#watch-pod]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+watch kubectl get pods
+----
+
+[.console-output]
+[source,bash]
+----
+NAME           READY   STATUS              RESTARTS   AGE
+quarkus-demo   0/1     ContainerCreating   0          10s
+----
+
+From ContainerCreating to Running with Ready 1/1:
+
+[.console-output]
+[source,bash]
+----
+NAME           READY   STATUS    RESTARTS   AGE
+quarkus-demo   1/1     Running   0          18s
+----
+
+Verify the application in the Pod:
+
+[#verify-pod]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl exec -it quarkus-demo -- /bin/sh
+----
+
+Run the next command.
+Notice that as you are inside the container instance, the hostname is `localhost`.
+
+[#curl-inside-pod]
 [.console-input]
 [source,bash]
 ----
-oc login -u %USERID% -p openshift https://openshift.default.svc:443
+curl localhost:8080
 ----
-====
-
-Create a new project in the OpenShift cluster to deploy our newly-modernized application, *customers*. Run the following command in the terminal.
-
-[.console-input]
-[source,bash,subs="+attributes,macros+"]
-----
-oc new-project customers-qa-%USERID%
-----
-
-== 3.2. Prepare the directory structure
-
-Create a directory for the binary build on your local file system and the `deployments/` subdirectory. Copy the WAR archive to `deployments/` directory by running the following commands in the terminal:
-
-[.console-input]
-[source,bash,subs="+attributes,macros+"]
-----
-cd $HOME/modern-app-dev/customers-tomcat-legacy
-
-mkdir -p ocp/deployments
-
-cp target/customers-tomcat-0.0.1-SNAPSHOT.war ocp/deployments/
-----
-
-== 3.3. Build the application container image
-
-Create a new build configuration, specifying image stream and application name. Run the following command in the terminal to do this:
-
-[.console-input]
-[source,bash,subs="+attributes,macros+"]
-----
-oc new-build --binary=true \
- --image-stream=jboss-webserver57-openjdk11-tomcat9-openshift-ubi8:latest \
- --name=customers
-----
-
-The output should look like this.
 
 [.console-output]
-[source,bash,subs="+attributes,macros+"]
+[source,bash]
 ----
---> Found image de5b7ae (5 weeks old) in image stream "openshift/jboss-webserver57-openjdk11-tomcat9-openshift-ubi8" under tag "latest" for "jboss-webserver57-openjdk11-tomcat9-openshift-ubi8:latest"
-
-    JBoss Web Server 5.7 OpenJDK11 
-    ------------------------------ 
-    Platform for building and running web applications on JBoss Web Server 5.7 with OpenJDK11 - Tomcat v9
-
-    Tags: builder, java, tomcat9
-
-    * A source build using binary input will be created
-      * The resulting image will be pushed to image stream tag "customers:latest"
-      * A binary build was created, use 'oc start-build --from-dir' to trigger a new build
-
---> Creating resources with label build=customers ...
-    imagestream.image.openshift.io "customers" created
-    buildconfig.build.openshift.io "customers" created
---> Success
+Supersonic Subatomic Java with Quarkus quarkus-demo:1
+exit
 ----
 
-== 3.4. Start the binary build
+Let's delete the previous Pod:
 
-Start the binary build based on that build configuration just created. Instruct OpenShift to use the `ocp` directory you created for the binary input for the image build.
-
-Run the following command in the terminal to start the build:
-
+[#delete-naked-pod]
 [.console-input]
-[source,bash,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-oc start-build customers --from-dir=./ocp --follow
-----
-
-The output should end up with this.
-
-[.console-output]
-[source,bash,subs="+attributes,macros+"]
-----
-....
-Pushing image image-registry.openshift-image-registry.svc:5000/customers-qa--%USERID%/customers:latest ...
-Getting image source signatures
-Copying blob sha256:1b890c73c3cf60b04334fded9e3edc647d64dd39ffd078317e2bd69552a2fd1d
-Copying blob sha256:de63ba066b7c0c23e2434efebcda7800d50d60f33803af9c500f75a69fb76ffa
-Copying blob sha256:04cfcc380bdf1d3454fa799d09adb1a7c56bdb66e42e90bd27504dda9c36470f
-Copying blob sha256:e2eaf64b098803173d3114593a4936dbce963608a9529b31927864cad0dc8b57
-Copying blob sha256:ad1cc61bdc476723b61f5cca7be1806ab9b7076d5a1fd682024f32c02bac1102
-Copying config sha256:10491aca30dd9d7eda9d862f0609029e1168e5b1807073cd26169e899ea14ee7
-Writing manifest to image destination
-Storing signatures
-Successfully pushed image-registry.openshift-image-registry.svc:5000/customers-qa-%USERID%/customers@sha256:8c3bced59a26db5d53afabe4990350444ceee1ca66eca78f10b7d4b5c61d2aaf
-Push successful
+kubectl delete pod quarkus-demo
 ----
 
-== 3.5. Create a new OpenShift application
-
-Create a new OpenShift application based on the newly-built container image. Run the following command in the terminal.
-
-[.console-input]
-[source,bash,subs="+attributes,macros+"]
-----
-oc new-app customers
-----
-
-The output should look like this.
-
-[.console-output]
-[source,bash,subs="+attributes,macros+"]
-----
---> Found image 50f873a (15 seconds old) in image stream "customers-qa-user1/customers" under tag "latest" for "customers"
-
-    JBoss Web Server 5.7 OpenJDK11 
-    ------------------------------ 
-    Platform for building and running web applications on JBoss Web Server 5.7 with OpenJDK11 - Tomcat v9
-
-    Tags: builder, java, tomcat9
-
-
---> Creating resources ...
-    deployment.apps "customers" created
-    service "customers" created
---> Success
-    Application is not exposed. You can expose services to the outside world by executing one or more of the commands below:
-     'oc expose service/customers' 
-    Run 'oc status' to view your app.
-----
-
-You can add the following label to show the application running on the JBoss Web Server. Run the following command in the terminal.
-
-[.console-input]
-[source,bash,subs="+attributes,macros+"]
-----
-oc label deployment/customers app.openshift.io/runtime=rh-tomcat
-----
-
-== 3.6. Verify the new customers application
-
-`Congratulations!` You just deployed a new *customers* application successfully to the OpenShift cluster. Access link:https://console-openshift-console.%SUBDOMAIN%/topology/ns/customers-qa-%USERID%?view=graph[Topology view^] if the application is running in the customers-qa-%USERID% project.
-
-image::customers-qa-topology.png[customers-qa-topology]
-
-Access the following RESTful API of the customers application to retrieve the customer data in the new Oracle database on OpenShift virtualization.
-
+[#watch-all-naked-pod]
 [.console-input]
 [source,bash]
 ----
-curl http://customers.customers-qa-%USERID%.svc.cluster.local:8080/customers-tomcat-0.0.1-SNAPSHOT/customers/1 ; echo
+watch kubectl get pods
 ----
-
-The output should look like this.
 
 [.console-output]
-[source,bash,subs="+attributes,macros+"]
+[source,bash]
 ----
-{"id":1,"username":"phlegm_master_19","name":"Guybrush","surname":"Threepwood","address":"1060 West Addison","zipCode":"ME-001","city":"Melee Town","country":"Melee Island"}
+NAME           READY   STATUS        RESTARTS   AGE
+quarkus-demo   0/1     Terminating   0          9m35s
+
+No resources found in myspace namespace.
 ----
 
-This shows that the newly-modernized application running on OpenShift can successfully retrieve customer data from the backend database.
+A Naked Pod disappears forever.
 
-== Summary
+== ReplicaSet
 
-Congratulations! You have now successfully remediated all the migration issues you have found and refactored the legacy application. In the next module, you'll learn how to implement `CI/CD` and `GitOps` for advanced application management on your Red Hat OpenShift cluster.
+Create a ReplicaSet:
+
+[#create-replicaset]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+    name: rs-quarkus-demo
+spec:
+    replicas: 3
+    selector:
+       matchLabels:
+          app: quarkus-demo
+    template:
+       metadata:
+          labels:
+             app: quarkus-demo
+             env: dev
+       spec:
+          containers:
+          - name: quarkus-demo
+            image: quay.io/rhdevelopers/quarkus-demo:v1
+EOF
+----
+
+Get the pods with labels:
+
+[#replicaset-show-labels]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+watch kubectl get pods --show-labels
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                    READY   STATUS    RESTARTS   AGE   LABELS
+rs-quarkus-demo-jd6jk   1/1     Running   0          58s   app=quarkus-demo,env=dev
+rs-quarkus-demo-mlnng   1/1     Running   0          58s   app=quarkus-demo,env=dev
+rs-quarkus-demo-t26gt   1/1     Running   0          58s   app=quarkus-demo,env=dev
+----
+
+[#get-rs]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get rs
+----
+
+[.console-output]
+[source,bash]
+----
+NAME              DESIRED   CURRENT   READY   AGE
+rs-quarkus-demo   3         3         3       79s
+----
+
+Describe the RS:
+
+[#describe-rs-quarkus-demo]
+[.console-input]
+[source,bash]
+----
+kubectl describe rs rs-quarkus-demo
+----
+
+[.console-output]
+[source,bash]
+----
+Name:         rs-quarkus-demo
+Namespace:    myspace
+Selector:     app=quarkus-demo
+Labels:       <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {"apiVersion":"apps/v1","kind":"ReplicaSet","metadata":{"annotations":{},"name":"rs-quarkus-demo","namespace":"myspace"},"spec":{"replicas...
+Replicas:     3 current / 3 desired
+Pods Status:  3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=quarkus-demo
+           env=dev
+  Containers:
+   quarkus-demo:
+    Image:        quay.io/rhdevelopers/quarkus-demo:v1
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Events:
+  Type    Reason            Age   From                   Message
+  ----    ------            ----  ----                   -------
+  Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-jd6jk
+  Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-t26gt
+  Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-mlnng
+----
+
+Pods are "owned" by the ReplicaSet:
+
+[#rs-owned-ref]
+[.console-input]
+[source,bash]
+----
+kubectl get pod rs-quarkus-demo-mlnng -o json | jq ".metadata.ownerReferences[]"
+----
+
+[.console-output]
+[source,bash]
+----
+{
+  "apiVersion": "apps/v1",
+  "blockOwnerDeletion": true,
+  "controller": true,
+  "kind": "ReplicaSet",
+  "name": "rs-quarkus-demo",
+  "uid": "1ed3bb94-dfa5-40ef-8f32-fbc9cf265324"
+}
+----
+
+Now delete a pod, while watching pods:
+
+[#delete-pod-rs]
+[.console-input]
+[source,bash]
+----
+kubectl delete pod rs-quarkus-demo-mlnng
+----
+
+And a new pod will spring to life to replace it:
+
+[.console-output]
+[source,bash]
+----
+NAME                    READY   STATUS              RESTARTS   AGE    LABELS
+rs-quarkus-demo-2txwk   0/1     ContainerCreating   0          2s     app=quarkus-demo,env=dev
+rs-quarkus-demo-jd6jk   1/1     Running             0          109s   app=quarkus-demo,env=dev
+rs-quarkus-demo-t26gt   1/1     Running             0          109s   app=quarkus-demo,env=dev
+----
+
+Delete the ReplicaSet to remove all the associated pods:
+
+[#delete-rs]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl delete rs rs-quarkus-demo
+----
+
+== Deployment
+
+[#create-deployment]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quarkus-demo-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: quarkus-demo
+  template:
+    metadata:
+      labels:
+        app: quarkus-demo
+        env: dev
+    spec:
+      containers:
+      - name: quarkus-demo
+        image: quay.io/rhdevelopers/quarkus-demo:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+EOF
+----
+
+[#pod-show-labels-dep]
+[.console-input]
+[source,bash]
+----
+kubectl get pods --show-labels
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                                       READY   STATUS    RESTARTS   AGE   LABELS
+quarkus-demo-deployment-5979886fb7-c888m   1/1     Running   0          17s   app=quarkus-demo,env=dev,pod-template-hash=5979886fb7
+quarkus-demo-deployment-5979886fb7-gdtnz   1/1     Running   0          17s   app=quarkus-demo,env=dev,pod-template-hash=5979886fb7
+quarkus-demo-deployment-5979886fb7-grf59   1/1     Running   0          17s   app=quarkus-demo,env=dev,pod-template-hash=5979886f
+----
+
+[#exec-inside-pod-labels]
+[.console-input]
+[source,bash]
+----
+kubectl exec -it quarkus-demo-deployment-5979886fb7-c888m -- curl localhost:8080
+----
+
+[.console-output]
+[source,bash]
+----
+Supersonic Subatomic Java with Quarkus quarkus-demo-deployment-5979886fb7-c888m:1
+----
+
+In the next section, you'll learn the concept of `Service`.
+This is an important element in Kubernetes ecosystem.
