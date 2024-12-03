@@ -4,10 +4,12 @@ https://martinfowler.com/bliki/BlueGreenDeployment.html[Here] you can find a des
 
 Make sure you are in the correct namespace
 
-:section-k8s: bluegreen
-:set-namespace: myspace
-
-include::partial$set-context.adoc[]
+[#no-resources-blue-green]
+[.console-input]
+[source, bash]
+----
+kubectl config set-context --current --namespace=myspace
+----
 
 Make sure nothing else is deployed:
 
