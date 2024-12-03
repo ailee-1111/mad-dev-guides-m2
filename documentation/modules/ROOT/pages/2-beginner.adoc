@@ -1,335 +1,296 @@
-= 2. Refactor - 40 minutes
-:imagesdir: ../assets/images
+= kubectl: The Kubernetes Client
 
-== Goals of this lab
-
-The goal of this lab is to understand the modernization issues related to the `customers` application that you found in the previous exercise and learn how you can resolve them by code modification. The MTA Analysis report also provides the details in terms of the *file name*, *path*, and *solution recommendations* for each issue.
-
-At the end, you will again analyze the customers application using MTA Analysis to confirm that the issues were successfully fixed.
-
-== 2.1. Explore the Migration issues
-
-According to the analysis report, the migration issues are related to external configurations with *hard-coded static IP addresses*.
-
-image::static-ip-issue.png[static-ip-issue]
-
-Let's look into the issue at the code level. In your VS Code server window, open the the `customers-tomcat-legacy` project and find `PersistenceConfig.java` file in *src/main/java/io/konveyor/demo/ordermanagement/config* directory.
-
-image::persistence-class.png[persistence-class]
-
-The `dataSource()` method creates an `ApplicationConfiguration` instance to configure JDBC variables such as _driverClassName_, _url_, _user_, and _password_. As you can see, the ApplicationConfiguration has a hard coded IP address reference in `persistence.properties`.
-
-image::applicationConfiguration-class.png[applicationConfiguration-class]
-
-== 2.2. Fix the External Configuration issues
-
-The legacy ApplicationConfiguration class is being used in this application. This is discouraged by the migration guidelines, and should be replaced by a more appropriate approach using Spring's `@PropertySource` annotation and `Environment` class.
-
-=== 2.2.1. Add Spring PropertySource annotation
-
-Add the following annotation on top of `PersistenceConfig` public class.
-
+[[talk]]
+== Talk to your Cluster
+[#kubectl-view-config]
 [.console-input]
-[source,java,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-@PropertySource("classpath:persistence.properties")
+echo $KUBECONFIG
+kubectl config view
 ----
 
-=== 2.2.2. Update DataSource method
 
-Then, inject an instance of the `Environment` class using the Spring `@Autowired` annotation to refer to the local application configuration. Add the following class variable to the _PersistenceConfig_ class.
+[[view-nodes]]
+== View Nodes
 
+[#kubectl-get-nodes]
 [.console-input]
-[source,java,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-    @Autowired
-    private Environment env;
+kubectl get nodes
+kubectl get nodes --show-labels
+kubectl get namespaces
 ----
 
-Replace the `dataSource()` method with the following code to get JDBC configurations through this the _Environment_ injection.
+[[view-pods]]
+== View out-of-the-box Pods
 
+Your Kubernetes vendor likely includes many pods out-of-the-box:
+
+[#kubectl-get-pods]
 [.console-input]
-[source,java,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-    @Bean
-    public DataSource dataSource() {
-        final DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(env.getProperty("jdbc.driverClassName"));
-        dataSource.setUrl(env.getProperty("jdbc.url"));
-        dataSource.setUsername(env.getProperty("jdbc.user"));
-        dataSource.setPassword(env.getProperty("jdbc.password"));
-
-        return dataSource;
-    }
+kubectl get pods --all-namespaces
+kubectl get pods --all-namespaces --show-labels
+kubectl get pods --all-namespaces -o wide
 ----
 
-The `PersistenceConfig` class should look like this.
+[[deploy-app]]
+== Deploy Something
 
-image::datasource-modification.png[datasource-modification]
+Create a Namespace and Deploy something:
 
-=== 2.2.3. Update additionalProperties method
-
-You also need to remove the *ApplicationConfiguration* reference in the `additionalProperties()` method. Replace the existing _additionalProperties_ method with the following code.
-
+[#kubectl-deploy-app]
 [.console-input]
-[source,java,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-    final Properties additionalProperties() {
-        final Properties hibernateProperties = new Properties();
-        hibernateProperties.setProperty("hibernate.hbm2ddl.auto", env.getProperty("hibernate.hbm2ddl.auto"));
-        hibernateProperties.setProperty("hibernate.dialect", env.getProperty("hibernate.dialect"));
-        hibernateProperties.setProperty("hibernate.cache.use_second_level_cache", "false");
+kubectl create namespace mystuff
+kubectl config set-context --current --namespace=mystuff
 
-        return hibernateProperties;
-    }
+kubectl create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1
 ----
 
-=== 2.2.4. Update Packages
+[[monitor-events]]
+== while monitoring Events
 
-Remove unnecessary package imports (e.g. _ApplicationConfiguration_) and add new package images for DI injection and PropertySource.
-
-The easiest way to do this is to replace all of the imports at the top of the file with this set of imports:
-
+[#kubectl-get-events]
 [.console-input]
-[source,java,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-import java.util.Properties;
-import javax.sql.DataSource;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
-import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.data.web.config.EnableSpringDataWebSupport;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+watch kubectl get events --sort-by=.metadata.creationTimestamp
 ----
-
-=== 2.2.5. Remove Corporate libraries
-
-With these changes, you don't need to refer to the external corporate libraries anymore. You can easily remove or comment out the dependency in your Maven project.
-
-Open the `pom.xml` and comment (or remove) the following `config-utils` dependency.
-
-[.console-input]
-[source,xml,subs="+attributes,macros+"]
-----
-		<!-- Corporate libraries -->
-		<!-- <dependency>
-			<groupId>io.konveyor.demo</groupId>
-			<artifactId>config-utils</artifactId>
-			<version>1.0.0</version>
-		</dependency> -->
-----
-
-image::comment-dep.png[comment-dep]
-
-=== 2.2.6. Update application.properties
-
-In the meantime, the Globex retails system's *SRE team* has already migrated the `Oracle database` running from the virtual machine on `Red Hat Virtualization` to `OpenShift Virtualization` based on KubeVirt.
-
-[TIP]
-====
-The link:https://access.redhat.com/documentation/en-us/migration_toolkit_for_virtualization/2.0/html/installing_and_using_the_migration_toolkit_for_virtualization/about-mtv_mtv[Migration Toolkit for Virtualization (MTV)^] enables you to migrate virtual machines from VMware vSphere or Red Hat Virtualization to OpenShift Virtualization based on link:https://kubevirt.io[KubeVirt^]. This is an add-on to OpenShift Container Platform, enabling you to run and manage virtual machine workloads alongside container workloads.
-====
-
-Access the link:https://console-openshift-console.%SUBDOMAIN%/topology/ns/retail-%USERID%?view=graph[Topology view^] of retail-%USERID% project in the Developer perspective. You will see the `oracle-database` virtual machine on OpenShift.
-
-* Username: `%USERID%`
-* Password: `{openshift-password}`
-
-image::retail-topology.png[comment-dep]
-
-In VSCode, Open the `persistence.properties` in the *src/main/resources* folder to access the *customers* data in the new *oracle-database* virtual machine on OpenShift.
-
-Replace the following keys and values such as `jdbc.url`, `jdbc.user`, and `jdbc.password`.
-
-[.console-input]
-[source,properties,subs="+attributes,macros+"]
-----
-jdbc.url=jdbc:oracle:thin:@oracle-database.retail-%USERID%.svc.cluster.local:1521/XEPDB1
-jdbc.user=customer
-jdbc.password=redhat
-----
-
-image::update-app-props.png[update-app-props]
-
-=== 2.2.7. Test the build
-
-Go to the `Terminal` window in VS Code server. Then, build and package the customer application again:
-
-[.console-input]
-[source,sh,subs="+attributes,macros+"]
-----
-cd $HOME/modern-app-dev/customers-tomcat-legacy/ &&
-mvn clean package
-----
-
-The output should end up with `BUILD SUCCESS`.
 
 [.console-output]
-[source,bash,subs="+attributes,macros+"]
+[source,bash,subs="+macros,+attributes"]
 ----
-....
-[INFO] --- maven-war-plugin:3.3.1:war (default-war) @ customers-tomcat ---
-[INFO] Packaging webapp
-[INFO] Assembling webapp [customers-tomcat] in [/home/codeserver/modern-app-dev/customers-tomcat-legacy/target/customers-tomcat-0.0.1-SNAPSHOT]
-[INFO] Processing war project
-[INFO] Building war: /home/codeserver/modern-app-dev/customers-tomcat-legacy/target/customers-tomcat-0.0.1-SNAPSHOT.war
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  9.884 s
-[INFO] Finished at: 2023-06-30T22:01:49Z
-[INFO] ------------------------------------------------------------------------
+LAST SEEN   TYPE     REASON              OBJECT                        MESSAGE
+<unknown>   Normal   Scheduled           pod/myapp-5dcbf46dfc-ghrk4    Successfully assigned mystuff/myapp-5dcbf46dfc-ghrk4 to g
+cp-5xldg-w-a-5ptpn.us-central1-a.c.ocp42project.internal
+29s         Normal   SuccessfulCreate    replicaset/myapp-5dcbf46dfc   Created pod: myapp-5dcbf46dfc-ghrk4
+29s         Normal   ScalingReplicaSet   deployment/myapp              Scaled up replica set myapp-5dcbf46dfc to 1
+21s         Normal   Pulling             pod/myapp-5dcbf46dfc-ghrk4    Pulling image "quay.io/burrsutter/quarkus-demo:1.0.0"
+15s         Normal   Pulled              pod/myapp-5dcbf46dfc-ghrk4    Successfully pulled image "quay.io/burrsutter/quarkus-dem
+o:1.0.0"
+15s         Normal   Created             pod/myapp-5dcbf46dfc-ghrk4    Created container quarkus-demo
+15s         Normal   Started             pod/myapp-5dcbf46dfc-ghrk4    Started container quarkus-demo
 ----
 
-=== 2.2.8. Commit and Push Changes
+[[created-objects]]
+== Created Objects
 
-Before you analyzing the MTA report, you need to commit and push changes to Gitea repository. Go back to VS Code and select `Source Control` menu on the left.
+=== Deployments
+[#kubectl-get-deployments]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get deployments
+----
 
-You will see 3 changes:
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+myapp   1/1     1            1           95s
+----
 
-* pom.xml
-* PersistenceConfig.java
-* persistence.properties
+=== Replicasets
+[#kubectl-get-replicasets]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get replicasets
+----
 
-Type `Fix migration issus` in the comment. Select `Commit`.
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME               DESIRED   CURRENT   READY   AGE
+myapp-5dcbf46dfc   1         1         1       2m1s
+----
 
-image::code-commit.png[code-commit]
+=== Pods
 
-Select `Yes`.
+[#kubectl-get-podsx]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get pods --show-labels
+----
 
-image::code-commit-yes.png[code-commit]
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME                     READY   STATUS    RESTARTS   AGE     LABELS
+myapp-5dcbf46dfc-ghrk4   1/1     Running   0          2m18s   app=myapp,pod-template-hash=5dcbf46dfc
+----
 
-Select `Sync Changes`.
+=== Logs
+[#kubectl-logs]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl logs -l app=myapp
+----
 
-image::sync-changes.png[sync-changes]
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+2020-03-22 14:41:30,497 INFO  [io.quarkus] (main) Quarkus 0.22.0 started in 0.021s. Listening on: http://0.0.0.0:8080
+2020-03-22 14:41:30,497 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy]
+----
 
-[NOTE]
-====
-You might see *Would you like code-server to periodically run "git fetch"?* popup message on the right bottom. Then, you can ignore it.
-====
+== Expose a Service
+[#kubectl-expose]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl expose deployment myapp --port=8080 --type=LoadBalancer
+----
 
-If you go back to your link:https://gitea.%SUBDOMAIN%/%USERID%/modern-app-dev[Gitea repository^], you will see the commit.
+=== while watching Services
 
-image::gitea-commit.png[gitea-commit]
+:section-k8s: kubectl
+include::partial$watching-services.adoc[]
 
-=== 2.2.9. Re-run MTA Analysis
+== Talk to the App
 
-Go back to the link:https://mta-mta-%USERID%.%SUBDOMAIN%/applications/analysis-tab[MTA Analysis web console^] and create a new inventory element to analyze the modernized application (*customers*).
+:section-k8s: kubectl
+:service-exposed: myapp
+include::partial$env-curl.adoc[]
 
-Click on `Create new`.
+== Scale the App
 
-image::mta-new-analysis.png[mta-new-analysis]
+Open three Terminal Windows.
 
-Fill in the following fields, and click `Create`:
+=== Terminal 1
+[#watch-pods]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+watch kubectl get pods
+----
 
-* Name: `New Customers`
-* Description: `Modernized Customers management service`
-* Business service: `Retail`
-* Tags: `Java`, `Tomcat`, `Spring Boot`, `RHEL 8`, `Oracle`
+=== Terminal 2
 
-* Source code:
-** Repository type - `Git`
-** Source Repository - `https://gitea.%SUBDOMAIN%/%USERID%/modern-app-dev.git`
-** Branch - `main`
-** Root path - `customers-tomcat-legacy`
+:service-exposed: myapp
 
-image::mta-new-app.png[mta-new-app]
+include::partial$env-curl.adoc[]
 
-Once you go back to the Application inventory page, search `New Customers` by name. Then, choose the _New Customers_ application inventory. Click on `Analyze`.
+Poll the endpoint:
 
-image::mta-search-new-customers.png[mta-search-new-customers]
+[#poll-endpoint]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+while true
+do curl $IP:$PORT
+sleep {curl-loop-sleep-time}
+done
+----
 
-[NOTE]
-====
-In case you run the MTA report for the first time (e.g., you skipped module 1), go to the *Administration* view, select *Repositories > Git*. `Toggle` the *Consume insecure Git repositories* switch to the right.
+Results of the polling:
 
-image::mta-admin-git.png[admin git]
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:289
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:290
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:291
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:292
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:293
+----
 
-You can also log in to the Gitea repository with the following credentials.
+=== Terminal 3
 
-* Username - `%USERID%`
-* Password - `{openshift-password}`
-====
+Change replicas:
 
-Select `Source code` in Analysis mode popup.
+[#change-replicas]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl scale deployment myapp --replicas=3
+----
 
-image::add-applications.png[Add applications]
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME                     READY   STATUS              RESTARTS   AGE
+myapp-5dcbf46dfc-6sn2s   0/1     ContainerCreating   0          4s
+myapp-5dcbf46dfc-ghrk4   1/1     Running             0          5m32s
+myapp-5dcbf46dfc-z6hqw   0/1     ContainerCreating   0          4s
+----
 
-Click on `Next`.
+Start a rolling update by changing the image:
 
-You will now be presented with options for transformation targets. Click on `Containers`, `Linux`, and `OpenJDK` as parameters for the application analysis just as before.
+[#set-image-myboot-v1]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v1
+----
 
-image::configure-analysis-checked.png[Configure Analysis]
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-6sn2s:188
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-z6hqw:169
+Aloha from Spring Boot! 0 on myapp-58b97dbd95-vxd87
+Aloha from Spring Boot! 1 on myapp-58b97dbd95-vxd87
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-6sn2s:189
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-z6hqw:170
+Aloha from Spring Boot! 2 on myapp-58b97dbd95-vxd87
+----
 
-Click on `Next`.
+[#set-image-myboot-v2]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v2
+----
 
-Select `Application and internal dependencies only` for the scope of dependencies.
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Bonjour from Spring Boot! 2 on myapp-7d58855c6b-6c8gd
+Bonjour from Spring Boot! 3 on myapp-7d58855c6b-6c8gd
+Aloha from Spring Boot! 7 on myapp-58b97dbd95-mjlwx
+Bonjour from Spring Boot! 4 on myapp-7d58855c6b-6c8gd
+Aloha from Spring Boot! 8 on myapp-58b97dbd95-mjlwx
+Bonjour from Spring Boot! 5 on myapp-7d58855c6b-6c8gd
+----
 
-image::packages.png[Select packages]
+[#set-image-quarkus-demo]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/quarkus-demo:v1
+----
 
-Click on `Next`.
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Bonjour from Spring Boot! 14 on myapp-7d58855c6b-dw67s
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:3
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:4
+Bonjour from Spring Boot! 15 on myapp-7d58855c6b-dw67s
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:5
+Bonjour from Spring Boot! 13 on myapp-7d58855c6b-72wp8
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7rkxj:1
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7rkxj:2
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:1
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7rkxj:3
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:2
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:3
+Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:6
+----
 
-You will now be presented with options for custom rules.
-
-image::custom-rules.png[Custom rules]
-
-Select `Repository` tab to refer to a custom rule (`corporate-framework-config.windup.xml`) in the *customrules* directory of your Gitea repository.
-
-Key in the following information in the repository page.
-
-* Repository type - `Git`
-* Source Repository - `https://gitea.%SUBDOMAIN%/%USERID%/modern-app-dev.git`
-* Branch - `main`
-* Root path - `customrules`
-* Associated credentials - `None`
-
-[NOTE]
-====
-In case you don't see `None` in the `Associated credentials`, please leave it since the field is not mandatory.
-====
-
-image::add-repository-customrules.png[add-repository-customrules]
-
-Click on `Next`.
-
-Next, click on `Next` in `Advanced options` to stick with the default options.
-
-image::fine-tune.png[Fine tuning]
-
-Lastly, we are presented with a summary of the configuration for our analysis.
-
-image::finish-project.png[Finish project]
-
-Click on `Run`.
-
-Now the new analysis will start, and once it is finished you will be able to access the reports. Stay on this view until the analysis is finished.
-
-[NOTE]
-====
-The analysis will take a few minutes to pull the Windup image and execute the application analysis.
-====
-
-image::new-active-analysis.png[Active analysis]
-
-Select *Customers* application. Then click on `Report` in the *Reports* tab on the right.
-
-image::new-active-analysis-report.png[Active analysis]
-
-Configure the project with the same settings and custom rules that we used for the Customers Service project. Once the report is finished, verify that it now reports `0` Story Points.
-
-## Congratulations!
-
-You have successfully migrated this app and now ready to deploy to OpenShift, *congratulations!*
-
-image::new-report-solution-view.png[New view report]
-
+=== Clean Up
+[#delete-namespace]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl delete namespace mystuff
+kubectl config set-context --current --namespace=default
+----
