@@ -22,6 +22,32 @@ image::1-1.png[1-1]
 ====
 
 
+
+== OpenShift cluster 접속
+
+워크숍 실습 메인페이지의 'OpenShift Console'링크를 클릭하여 OpenShift 웹콘솔에 접속합니다.
+
+image::2-2.png[2-2]
+
+[IMPORTANT]
+====
+Login ID는 '%USERID%' 이며, 패스워드는 'openshift'입니다.
+====
+
+
+== CLI 터미널
+
+OpenShift 웹콘솔의 오른쪽 상단의 웹터미널 아이콘을 클릭하여 CLI 터미널 창을 엽니다.
+그 다음 '시작'버튼을 눌러 터미널을 활성화 합니다.
+
+image::2-1.png[2-1]
+
+[IMPORTANT]
+====
+앞으로 명령어를 입력(복사/붙여넣기)하여 진행되는 실습은 해당 터미널 창을 이용하여 수행합니다.
+====
+
+
 == 축하합니다!
 
 이제 워크숍 환경을 확인했습니다.
