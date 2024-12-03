@@ -1,1 +1,226 @@
-test
+= Service
+
+NOTE: This follows the creation of the Deployment in the previous chapter
+
+Make sure you are in the correct namespace:
+
+:section-k8s: services
+:set-namespace: myspace
+
+include::partial$set-context.adoc[]
+
+Make sure you have Deployment:
+
+[#have-deployment-service]
+[.console-input]
+[source,bash]
+----
+kubectl get deployments
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+quarkus-demo-deployment   3/3     3            3           8m33s
+----
+
+Make sure you have RS:
+
+[#have-rs-service]
+[.console-input]
+[source,bash]
+----
+kubectl get rs
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                                 DESIRED   CURRENT   READY   AGE
+quarkus-demo-deployment-5979886fb7   3         3         3       8m56s
+----
+
+Make sure you have Pods:
+
+[#have-pods-service]
+[.console-input]
+[source,bash]
+----
+kubectl get pods
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                                       READY   STATUS    RESTARTS   AGE
+quarkus-demo-deployment-5979886fb7-c888m   1/1     Running   0          9m17s
+quarkus-demo-deployment-5979886fb7-gdtnz   1/1     Running   0          9m17s
+quarkus-demo-deployment-5979886fb7-grf59   1/1     Running   0          9m17s
+----
+
+Create a Service
+[#create-service]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: the-service
+spec:
+  selector:
+    app: quarkus-demo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+EOF
+----
+
+:section-k8s: services
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+watch kubectl get services
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME          TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+the-service   LoadBalancer   172.30.103.41   <pending>     80:31974/TCP     4s
+----
+
+Wait until you see an external IP assigned.
+
+NOTE: On Minikube without an Ingress controller, <pending> will not become a real external IP.  https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/[Optional: Setup Minikube Ingress]
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME    TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
+myapp   LoadBalancer   172.30.103.41   34.71.122.153   8080:31974/TCP   44s
+----
+
+:section-k8s: services
+:service-exposed: the-service
+include::partial$env-curl.adoc[]
+
+Results:
+
+[.console-output]
+[source,bash]
+----
+Supersonic Subatomic Java with Quarkus quarkus-demo-deployment-5979886fb7-grf59:1
+----
+
+NOTE: "5979886fb7-grf59" is part of the unique id for the pod. The `.java` code uses `System.getenv().getOrDefault("HOSTNAME", "unknown");`
+
+== Ingress
+
+[#create-ingress]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: myingress
+spec:
+  rules:
+  - host: stuff-myspace.apps.gcp.burrsutter.dev
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: the-service
+          servicePort: 80
+EOF          
+----
+
+[#curl-services-ingress]
+[.console-input]
+[source, bash]
+----
+curl stuff-myspace.apps.gcp.burrsutter.dev
+----
+
+[.console-output]
+[source,bash]
+----
+Supersonic Subatomic Java with Quarkus quarkus-demo-deployment-5979886fb7-gdtnz:2
+----
+
+In case of using Minikube follow: https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
+
+== OpenShift Route
+
+Delete the manually created Ingress to avoid any naming collisions.  An OpenShift Route leverages ha-proxy for its default Ingress.
+
+[#delete-ingress]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl delete ingress myingress
+----
+
+[#expose-service]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc expose service the-service
+kubectl get routes
+----
+
+[.console-output]
+[source,bash]
+----
+NAME          HOST/PORT                                     PATH   SERVICES      PORT   TERMINATION   WILDCARD
+the-service   the-service-myspace.apps.gcp.burrsutter.dev          the-service   8080                 None
+----
+
+Then make a request to the service:
+
+[#curl-services-route]
+[.console-input]
+[source, bash]
+----
+curl the-service-myspace.apps.gcp.burrsutter.dev
+----
+
+[.console-output]
+[source,bash]
+----
+Supersonic Subatomic Java with Quarkus quarkus-demo-deployment-5979886fb7-gdtnz:3
+----
+
+=== Use jq to pull out the data elements you need for scripting
+
+[.console-input]
+[source,bash]
+----
+kubectl get route the-service -o json > myroutes.json
+----
+
+Copy and paste contents into jqplay.org
+
+https://www.screencast.com/t/09biZYHNo62
+
+[#install-jq]
+[.console-input]
+[source, bash]
+----
+brew install jq
+----
+
+[#route-jq]
+[.console-input]
+[source, bash]
+----
+kubectl get route the-service -o json | jq '.spec.host'
+"the-service-myspace.apps.gcp.burrsutter.dev"
+----
