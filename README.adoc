@@ -73,7 +73,7 @@ http://localhost:3000/mad-dev-guides-m2/main/1-introduction.html?USERID=user1&SU
 [.console-input]
 [source,bash]
 ----
-oc new-app  https://github.com/RedHat-Middleware-Workshops/mad-dev-guides-m2.git --strategy=docker
+oc new-app  https://github.com/ailee-1111/mad-dev-guides-m2.git --strategy=docker
 
 oc create route edge mad-dev-guides-m2 --service=mad-dev-guides-m2
 ----
