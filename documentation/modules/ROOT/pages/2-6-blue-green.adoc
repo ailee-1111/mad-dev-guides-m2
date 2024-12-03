@@ -140,4 +140,3 @@ kubectl delete service myboot
 kubectl delete deployment myboot
 kubectl delete deployment myboot-next
 ----
-
