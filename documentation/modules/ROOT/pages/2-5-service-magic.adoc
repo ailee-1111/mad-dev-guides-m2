@@ -1,1 +1,292 @@
+= Service Magic
 
+Create a Namespace:
+
+[#create-namespace]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl create namespace funstuff
+kubectl config set-context --current --namespace=funstuff
+----
+
+== Deploy mypython
+
+[#deploy-mypython]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mypython-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mypython
+  template:
+    metadata:
+      labels:
+        app: mypython
+    spec:
+      containers:
+      - name: mypython
+        image: quay.io/rhdevelopers/mypython:v1
+        ports:
+        - containerPort: 8000
+EOF
+----
+
+== Deploy mygo
+
+[#deploy-mygo]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mygo-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mygo
+  template:
+    metadata:
+      labels:
+        app: mygo
+    spec:
+      containers:
+      - name: mygo
+        image: quay.io/rhdevelopers/mygo:v1
+        ports:
+        - containerPort: 8000
+EOF
+----
+
+== Deploy mynode
+
+[#deploy-mynode]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mynode-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mynode
+  template:
+    metadata:
+      labels:
+        app: mynode
+    spec:
+      containers:
+      - name: mynode
+        image: quay.io/rhdevelopers/mynode:v1
+        ports:
+        - containerPort: 8000
+EOF
+----
+
+[#labels-service-magic]
+[.console-input]
+[source, bash]
+----
+watch kubectl get pods --show-labels
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                                   READY   STATUS    RESTARTS   AGE     LABELS
+mygo-deployment-6d944c5c69-kcvmk       1/1     Running   0          2m11s   app=mygo,pod-template-hash=6d944c5c69
+mynode-deployment-fb5457c5-hhz7h       1/1     Running   0          2m1s    app=mynode,pod-template-hash=fb5457c5
+mypython-deployment-6874f84d85-2kpjl   1/1     Running   0          3m53s   app=mypython,pod-template-hash=6874f84d85
+----
+
+[#deploy-myservice]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  labels:
+    app: mystuff
+spec:
+  ports:
+  - name: http
+    port: 8000
+  selector:
+    inservice: mypods
+  type: LoadBalancer
+EOF
+----
+
+[#describe-myservice-service-magic]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl describe service my-service
+----
+
+[#get-endpoints-myservice]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get endpoints
+----
+
+[.console-output]
+[source,bash]
+----
+NAME         ENDPOINTS   AGE
+my-service   <none>      2m6s
+----
+
+[#get-endpoints1]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
+----
+
+[.console-output]
+[source,bash]
+----
+jq: error (at <stdin>:18): Cannot iterate over null (null)
+----
+
+:section-k8s: servicemagic
+:service-exposed: my-service
+include::partial$env-curl.adoc[]
+
+And run loop script:
+
+include::partial$loop.adoc[]
+
+[.console-output]
+[source,bash]
+----
+curl: (7) Failed to connect to 35.224.233.213 port 8000: Connection refused
+curl: (7) Failed to connect to 35.224.233.213 port 8000: Connection refused
+----
+
+[#label-mypython]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl label pod -l app=mypython inservice=mypods
+----
+
+[.console-output]
+[source,bash]
+----
+curl: (7) Failed to connect to 35.224.233.213 port 8000: Connection refused
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+----
+
+[#label-mynode]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl label pod -l app=mynode inservice=mypods
+----
+
+[.console-output]
+[source,bash]
+----
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Node Hello on mynode-deployment-fb5457c5-hhz7h 0
+Node Hello on mynode-deployment-fb5457c5-hhz7h 1
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+----
+
+[#label-mygo]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl label pod -l app=mygo inservice=mypods
+----
+
+[.console-output]
+[source,bash]
+----
+Node Hello on mynode-deployment-fb5457c5-hhz7h 59
+Node Hello on mynode-deployment-fb5457c5-hhz7h 60
+Go Hello on mygo-deployment-6d944c5c69-kcvmk
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+Python Hello on mypython-deployment-6874f84d85-2kpjl
+----
+
+[#get-endpoints2]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
+----
+
+[.console-output]
+[source,bash]
+----
+"10.130.2.43"
+"10.130.2.44"
+"10.130.2.45"
+----
+
+See the Pod IPs:
+
+[#pod-ips]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get pods -o wide
+----
+
+Remove `mypython` Pod from the Service:
+
+[#remove-label]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl label pod -l app=mypython inservice-
+----
+
+[#get-endpoints3]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
+----
+
+[.console-output]
+[source,bash]
+----
+"10.130.2.44"
+"10.130.2.45"
+----
+
+== Clean Up
+
+[#clean-up]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl delete namespace funstuff
+----
