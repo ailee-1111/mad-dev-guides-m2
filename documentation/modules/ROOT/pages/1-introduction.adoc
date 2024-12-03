@@ -1,296 +1,133 @@
-= 1. kubectl: The Kubernetes Client
+== 1.2. Workshop Environment
 
-[[talk]]
-== 1.1. Talk to your Cluster
-[#kubectl-view-config]
+=== 1.2.1. Confirm Your Username!
+
+Look in the box at the top of your screen. Is your username set already? If so it will look like this:
+
+image::alreadyset.png[alreadyset]
+
+If your `username` is properly set, then you can move on. *If not, in the above box, enter the user ID you were assigned* like this:
+
+image::setuser.png[setuser]
+
+This will customize the links and copy/paste code for this workshop. If you accidentally type the wrong username, just update your username in the URL parameters (e.g. ` 1-introduction.html?USERID=%USERID% ` )
+
+[IMPORTANT]
+====
+You have to use *an unique username* (e.g. `%USERID%`) while you're running the hands-on labs. For example, you need to deploy applications to your own project (e.g. retail-%USERID%).
+====
+
+=== 1.2.2. OpenShift Cluster
+
+Your OpenShift cluster is already configured with everything you need. Here are the details:
+
+* `Gitea` to host the source code repositories
+* `OpenShift Virtualization` to ultimately run the migrated Oracle VM
+* `Migration Toolkit for Virtualization` to facilitate the migration of the Oracle VM to Red Hat OpenShift Container Platform
+* `OpenShift GitOps` to manage the deployed services using a GitOps approach through ArgoCD
+* `OpenShift Pipelines` to build the customer application from source code and deploy to the `retail` project using GitOps
+* `Migration Toolkit for Applications` to help modernize the customer service.
+
+=== 1.2.3. Visual Studio Code Server
+
+VSCode is already deployed in the OpenShift cluster for you you to use as your IDE. This means you don't need to install and configure anything on your system. This makes it easy to change source code and configuration files in the cloned repository.
+
+To get started, access the link:https://codeserver-codeserver-%USERID%.%SUBDOMAIN%[VS Code server instance^] and log in using the following `password`.
+
+* Password: `{openshift-password}`
+
+image::vscode-server-login.png[vscode-server-login]
+
+The graphical user interface (GUI) should look like:
+
+image::vscode.png[VSCode]
+
+== 1.3. Explore the Globex Retail Services (GUI)
+
+Confirm you're able to access the retail services application by accessing its frontend web application. To find the URL to access the *Frontend* application, you need to use the OpenShift command line tool (`oc`). Go to the VS Code server and Open a new terminal that already installed the _oc_ command by default.
+
+Click on `New Terminal` in Terminal menu in the VS Code. Once a new terminal is open, run the following _oc_ command.
+
 [.console-input]
-[source,bash,subs="+macros,+attributes"]
+[source,bash]
 ----
-echo $KUBECONFIG
-kubectl config view
+oc login -u %USERID% -p openshift https://openshift.default.svc:443
 ----
 
+image::vscode-terminal.png[vscode-terminal]
 
-[[view-nodes]]
-== 1.2. View Nodes
+[NOTE]
+====
+If you see a popup message about allowing copy/paste, *"See text and images copied to the clipboard"*, click on `Allow`. Then you might also see `"Use insecure connections?"` message in the terminal. In case, press `y`.
+====
 
-[#kubectl-get-nodes]
+Find the `Route` URL for the *Frontend* application. Run the following `oc` command in the VS Code server terminal.
+
 [.console-input]
-[source,bash,subs="+macros,+attributes"]
+[source,bash,subs="+attributes,macros+"]
 ----
-kubectl get nodes
-kubectl get nodes --show-labels
-kubectl get namespaces
+oc get route ordersfrontend -n retail-%USERID%
 ----
 
-[[view-pods]]
-== 1.3. View out-of-the-box Pods
-
-Your Kubernetes vendor likely includes many pods out-of-the-box:
-
-[#kubectl-get-pods]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl get pods --all-namespaces
-kubectl get pods --all-namespaces --show-labels
-kubectl get pods --all-namespaces -o wide
-----
-
-[[deploy-app]]
-== 1.4. Deploy Something
-
-Create a Namespace and Deploy something:
-
-[#kubectl-deploy-app]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl create namespace mystuff
-kubectl config set-context --current --namespace=mystuff
-
-kubectl create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1
-----
-
-[[monitor-events]]
-== 1.5. while monitoring Events
-
-[#kubectl-get-events]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-watch kubectl get events --sort-by=.metadata.creationTimestamp
-----
+The output should look like:
 
 [.console-output]
-[source,bash,subs="+macros,+attributes"]
+[source,bash,subs="+attributes,macros+"]
 ----
-LAST SEEN   TYPE     REASON              OBJECT                        MESSAGE
-<unknown>   Normal   Scheduled           pod/myapp-5dcbf46dfc-ghrk4    Successfully assigned mystuff/myapp-5dcbf46dfc-ghrk4 to g
-cp-5xldg-w-a-5ptpn.us-central1-a.c.ocp42project.internal
-29s         Normal   SuccessfulCreate    replicaset/myapp-5dcbf46dfc   Created pod: myapp-5dcbf46dfc-ghrk4
-29s         Normal   ScalingReplicaSet   deployment/myapp              Scaled up replica set myapp-5dcbf46dfc to 1
-21s         Normal   Pulling             pod/myapp-5dcbf46dfc-ghrk4    Pulling image "quay.io/burrsutter/quarkus-demo:1.0.0"
-15s         Normal   Pulled              pod/myapp-5dcbf46dfc-ghrk4    Successfully pulled image "quay.io/burrsutter/quarkus-dem
-o:1.0.0"
-15s         Normal   Created             pod/myapp-5dcbf46dfc-ghrk4    Created container quarkus-demo
-15s         Normal   Started             pod/myapp-5dcbf46dfc-ghrk4    Started container quarkus-demo
+NAME             HOST/PORT                                                                PATH   SERVICES         PORT   TERMINATION     WILDCARD
+ordersfrontend   ordersfrontend-retail-%USERID%.%SUBDOMAIN%          ordersfrontend   web    edge/Redirect   None
 ----
 
-[[created-objects]]
-== 1.6. Created Objects
+Navigate to the orders frontend route by entering the hostname listed above under `HOST/PORT` into your browser's address bar.
 
-=== Deployments
-[#kubectl-get-deployments]
+image::frontend.png[Frontend]
+
+Click through the three panels on the left.
+
+* `Customers` shows the list of the customer information such as _fullname, city, country, and username_.
+* `Orders` shows current order information including relevant customer data.
+* `Products` shows the current inventory information.
+
+== 1.4. Access the Customer Data
+
+The RHV environment not only has the Oracle Database VM deployed but it also hosts another VM which runs the old customer application on top of Apache Tomcat.
+
+From a terminal window you can use `curl` to demonstrate that the application is connected to the database.
+
+Use the IP Address of the *Customer Service (Tomcat VM)* to access the customer service. Run the following _curl_ command in the VS Code server's terminal {or your local environment since the Tomcat IP address is publicly accessible).
+
 [.console-input]
-[source,bash,subs="+macros,+attributes"]
+[source,bash]
 ----
-kubectl get deployments
+curl http://%TOMCATIP%:8080/customers-tomcat-0.0.1-SNAPSHOT/customers/1 ; echo
 ----
+
+The output should look like:
 
 [.console-output]
-[source,bash,subs="+macros,+attributes"]
+[source,json]
 ----
-NAME    READY   UP-TO-DATE   AVAILABLE   AGE
-myapp   1/1     1            1           95s
+{"id":1,"username":"phlegm_master_19","name":"Guybrush","surname":"Threepwood","address":"1060 West Addison","zipCode":"ME-001","city":"Melee Town","country":"Melee Island"}
 ----
 
-=== Replicasets
-[#kubectl-get-replicasets]
+Try to get another customer data.
+
 [.console-input]
-[source,bash,subs="+macros,+attributes"]
+[source,bash]
 ----
-kubectl get replicasets
+curl http://%TOMCATIP%:8080/customers-tomcat-0.0.1-SNAPSHOT/customers/2 ; echo
 ----
+
+The output should look like:
 
 [.console-output]
-[source,bash,subs="+macros,+attributes"]
+[source,json]
 ----
-NAME               DESIRED   CURRENT   READY   AGE
-myapp-5dcbf46dfc   1         1         1       2m1s
-----
-
-=== Pods
-
-[#kubectl-get-podsx]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl get pods --show-labels
+{"id":2,"username":"hate_guybrush","name":"Pirate","surname":"Lechuck","address":"Caverns of Meat, no number","zipCode":"MO-666","city":"Giant Monkey Head","country":"Monkey Island"}
 ----
 
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-NAME                     READY   STATUS    RESTARTS   AGE     LABELS
-myapp-5dcbf46dfc-ghrk4   1/1     Running   0          2m18s   app=myapp,pod-template-hash=5dcbf46dfc
-----
+== Congratulations!
 
-=== Logs
-[#kubectl-logs]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl logs -l app=myapp
-----
+You have now successfully learned about the architecture of the application and confirmed your workshop environment.
 
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-2020-03-22 14:41:30,497 INFO  [io.quarkus] (main) Quarkus 0.22.0 started in 0.021s. Listening on: http://0.0.0.0:8080
-2020-03-22 14:41:30,497 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy]
-----
-
-== Expose a Service
-[#kubectl-expose]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl expose deployment myapp --port=8080 --type=LoadBalancer
-----
-
-=== while watching Services
-
-:section-k8s: kubectl
-include::partial$watching-services.adoc[]
-
-== Talk to the App
-
-:section-k8s: kubectl
-:service-exposed: myapp
-include::partial$env-curl.adoc[]
-
-== Scale the App
-
-Open three Terminal Windows.
-
-=== Terminal 1
-[#watch-pods]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-watch kubectl get pods
-----
-
-=== Terminal 2
-
-:service-exposed: myapp
-
-include::partial$env-curl.adoc[]
-
-Poll the endpoint:
-
-[#poll-endpoint]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-while true
-do curl $IP:$PORT
-sleep {curl-loop-sleep-time}
-done
-----
-
-Results of the polling:
-
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:289
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:290
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:291
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:292
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:293
-----
-
-=== Terminal 3
-
-Change replicas:
-
-[#change-replicas]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl scale deployment myapp --replicas=3
-----
-
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-NAME                     READY   STATUS              RESTARTS   AGE
-myapp-5dcbf46dfc-6sn2s   0/1     ContainerCreating   0          4s
-myapp-5dcbf46dfc-ghrk4   1/1     Running             0          5m32s
-myapp-5dcbf46dfc-z6hqw   0/1     ContainerCreating   0          4s
-----
-
-Start a rolling update by changing the image:
-
-[#set-image-myboot-v1]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v1
-----
-
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-6sn2s:188
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-z6hqw:169
-Aloha from Spring Boot! 0 on myapp-58b97dbd95-vxd87
-Aloha from Spring Boot! 1 on myapp-58b97dbd95-vxd87
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-6sn2s:189
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-z6hqw:170
-Aloha from Spring Boot! 2 on myapp-58b97dbd95-vxd87
-----
-
-[#set-image-myboot-v2]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v2
-----
-
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-Bonjour from Spring Boot! 2 on myapp-7d58855c6b-6c8gd
-Bonjour from Spring Boot! 3 on myapp-7d58855c6b-6c8gd
-Aloha from Spring Boot! 7 on myapp-58b97dbd95-mjlwx
-Bonjour from Spring Boot! 4 on myapp-7d58855c6b-6c8gd
-Aloha from Spring Boot! 8 on myapp-58b97dbd95-mjlwx
-Bonjour from Spring Boot! 5 on myapp-7d58855c6b-6c8gd
-----
-
-[#set-image-quarkus-demo]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/quarkus-demo:v1
-----
-
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-Bonjour from Spring Boot! 14 on myapp-7d58855c6b-dw67s
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:3
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:4
-Bonjour from Spring Boot! 15 on myapp-7d58855c6b-dw67s
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:5
-Bonjour from Spring Boot! 13 on myapp-7d58855c6b-72wp8
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7rkxj:1
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7rkxj:2
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:1
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7rkxj:3
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:2
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:3
-Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:6
-----
-
-=== Clean Up
-[#delete-namespace]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-kubectl delete namespace mystuff
-kubectl config set-context --current --namespace=default
-----
+In the next step, you'll continue the modernization process by analyzing the source code of one of the applications and refactor it to run as a Linux container on OpenShift.
