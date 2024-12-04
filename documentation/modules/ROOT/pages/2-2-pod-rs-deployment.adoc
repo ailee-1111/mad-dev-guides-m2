@@ -1,18 +1,25 @@
 = Pod, ReplicaSet, Deployment
 
-First create a namespace to work in:
+먼저 작업할 네임스페이스를 만듭니다.:
 
 [#create-namespace]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl create namespace myspace
-kubectl config set-context --current --namespace=myspace
+oc create namespace myspace-%userid%
 ----
+
+[#create-namespace]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project myspace-%userid% 
+----
+
 
 == Pod
 
-Create a https://kubernetes.io/docs/concepts/configuration/overview/#naked-pods-vs-replicasets-deployments-and-jobs[naked pod]:
+https://kubernetes.io/docs/concepts/configuration/overview/#naked-pods-vs-replicasets-deployments-and-jobs[naked pod]를 생성합니다.:
 
 [#create-pod]
 [.console-input]
@@ -30,13 +37,13 @@ spec:
 EOF
 ----
 
-Watch the pod lifecycle:
+포드 수명주기를 살펴보세요.:
 
 [#watch-pod]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-watch kubectl get pods
+watch oc get pods
 ----
 
 [.console-output]
@@ -46,7 +53,7 @@ NAME           READY   STATUS              RESTARTS   AGE
 quarkus-demo   0/1     ContainerCreating   0          10s
 ----
 
-From ContainerCreating to Running with Ready 1/1:
+NOTE : 
 
 [.console-output]
 [source,bash]
