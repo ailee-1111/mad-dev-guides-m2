@@ -4,7 +4,7 @@
  kubernetes에서 기본적으로 제공 및 사용하는 CLI(CommandLine Interface)입니다. Kubernetes API와 상호작용하여 클러스터를 관리하는 데 사용됩니다.
 표준 Kubernetes 명령어를 지원하며, 모든 kubernetes기반의 클러스터에서 동작합니다.
 
-*oc
+* oc
  OpenShift에서 제공하는 CLI(CommandLine Interface)입니다. Kubernetes 기능위에 추가적인 기능(예: 추가 클러스터 관리명령, OpenShift 고유 리소스 관리 등)을 제공합니다.
 kubectl 명령어를 기본적으로 포함합니다.
 
