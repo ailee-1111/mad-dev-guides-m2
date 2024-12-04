@@ -550,10 +550,25 @@ IMPORTANT: curl 명령어를 수행하여 app이 hosting하고 있는 문구를 
 == Application 확장
 
 명령줄 터미널에서 +버튼을 눌러 3개의 터미널 창을 엽니다.
+image::2-4.png[2-4]
 
 
+=== Terminal 1번
 
-=== Terminal 1
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project mystuff-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "mystuff-%userid%" on server "https://172.30.0.1:443".
+----
+
 [#watch-pods]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -561,11 +576,46 @@ IMPORTANT: curl 명령어를 수행하여 app이 hosting하고 있는 문구를 
 watch oc get pods
 ----
 
-=== Terminal 2
+NOTE: 터미널 1번은 지속적으로 pod list를 출력하며, replicaset이 변경됨에 따라 pod수가 1개에서 3개로 늘어나는 것을 확인할 수 있습니다.
 
-:service-exposed: myapp
+=== Terminal 2번
 
-include::partial$env-curl.adoc[]
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project mystuff-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "mystuff-%userid%" on server "https://172.30.0.1:443".
+----
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+IP=$(kubectl get service myapp -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+----
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+PORT=$(kubectl get service myapp -o jsonpath="{.spec.ports[*].port}")
+----
+
+
+Curl the Service:
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+curl $IP:$PORT
+----
+
 
 Poll the endpoint:
 
@@ -575,11 +625,11 @@ Poll the endpoint:
 ----
 while true
 do curl $IP:$PORT
-sleep {curl-loop-sleep-time}
+sleep 0.8
 done
 ----
 
-Results of the polling:
+polling 결과는 다음과 같습니다.:
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
@@ -591,16 +641,35 @@ Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:292
 Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:293
 ----
 
-=== Terminal 3
+NOTE: 터미널 2번은 지속적으로 3개의 pod로의 curl poling을 시도합니다. application의 이미지를 변경하여 Rolling update가 진행됨에 따라 실시간으로 poling 결과값이 변하는 것을 관찰할 수 있습니다.
 
-Change replicas:
+
+=== Terminal 3번
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project mystuff-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "mystuff-%userid%" on server "https://172.30.0.1:443".
+----
+
+
+replicas 변경:
 
 [#change-replicas]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl scale deployment myapp --replicas=3
+oc scale deployment myapp --replicas=3
 ----
+
+
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
@@ -611,13 +680,16 @@ myapp-5dcbf46dfc-ghrk4   1/1     Running             0          5m32s
 myapp-5dcbf46dfc-z6hqw   0/1     ContainerCreating   0          4s
 ----
 
-Start a rolling update by changing the image:
+NOTE: 해당 결과는 터미널 1번에서 확인합니다.  터미널 1번은 지속적으로 pod list를 출력하며, replicaset이 변경됨에 따라 pod수가 1개에서 3개로 늘어나는 것을 확인할 수 있습니다.
+
+
+이미지를 변경하여 롤링 업데이트 시작:
 
 [#set-image-myboot-v1]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v1
+oc set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v1
 ----
 
 [.console-output]
@@ -632,11 +704,15 @@ Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-z6hqw:170
 Aloha from Spring Boot! 2 on myapp-58b97dbd95-vxd87
 ----
 
+NOTE: 해당 결과는 터미널 2번에서 확인합니다. 터미널 2번은 지속적으로 3개의 pod로의 curl poling을 시도합니다. application의 이미지를 변경하여 Rolling update가 진행됨에 따라 실시간으로 poling 결과값이 변하는 것을 관찰할 수 있습니다.
+
+
+
 [#set-image-myboot-v2]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v2
+oc set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/myboot:v2
 ----
 
 [.console-output]
@@ -650,11 +726,14 @@ Aloha from Spring Boot! 8 on myapp-58b97dbd95-mjlwx
 Bonjour from Spring Boot! 5 on myapp-7d58855c6b-6c8gd
 ----
 
+NOTE: 해당 결과는 터미널 2번에서 확인합니다. 터미널 2번은 지속적으로 3개의 pod로의 curl poling을 시도합니다. application의 이미지를 변경하여 Rolling update가 진행됨에 따라 실시간으로 poling 결과값이 변하는 것을 관찰할 수 있습니다.
+
+
 [#set-image-quarkus-demo]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/quarkus-demo:v1
+oc set image deployment/myapp quarkus-demo=quay.io/rhdevelopers/quarkus-demo:v1
 ----
 
 [.console-output]
@@ -675,11 +754,14 @@ Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-7lf9t:3
 Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:6
 ----
 
+NOTE: 해당 결과는 터미널 2번에서 확인합니다. 터미널 2번은 지속적으로 3개의 pod로의 curl poling을 시도합니다. application의 이미지를 변경하여 Rolling update가 진행됨에 따라 실시간으로 poling 결과값이 변하는 것을 관찰할 수 있습니다.
+
 === Clean Up
 [#delete-namespace]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete namespace mystuff
-kubectl config set-context --current --namespace=default
+oc delete namespace mystuff-%userid%
 ----
+
+NOTE: *mystuff-%userid%* namespace를 삭제합니다.(해당 namespace의 하위 리소스들도 함께 삭제됩니다.)
