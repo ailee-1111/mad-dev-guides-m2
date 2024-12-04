@@ -147,6 +147,21 @@ NOTE: `oc get nodes` : 클러스터 내의 모든 노드를 목록으로 출력�
 `oc get nodes --show-labels` : 노드의 정보를 출력하면서 각 노드에 적용된 라벨도 표시합니다.
 
 
+== Red Hat OpenShift 주요 개념
+OpenShift 기능을 탐색할 때 OpenShift, Kubernetes, 컨테이너 기술에 대한 몇 가지 입문 용어를 알고 있으면 유용합니다. +
+다음 목록에는 OpenShift 웹 콘솔을 탐색하는 데 도움이 되는 몇 가지 기본 개념이 포함되어 있습니다.
+
+* *Pod* : Kubernetes에서 관리하는 컨테이너화된 애플리케이션의 가장 작은 단위입니다. 포드는 하나 이상의 컨테이너로 구성됩니다.
+
+* *Deployment* : 실행 중인 애플리케이션을 세부적으로 관리할 수 있는 운영 단위입니다.
+
+* *Project* : 애플리케이션에 멀티 테넌시 범위를 제공하는 추가 주석이 있는 Kubernetes 네임스페이스입니다.
+
+* *Routes* : 클러스터 외부 리소스에 애플리케이션 및 서비스를 노출하는 네트워킹 구성입니다.
+
+* *Operators* : 클러스터 기능을 확장하며 패키지로 제공되는 Kubernetes 애플리케이션입니다.
+
+
 
 
 == 클러스터에 배포되어 있는 `Pods` 를 확인하세요.
@@ -245,6 +260,7 @@ oc create namespace mystuff
 namespace/mystuff created
 ----
 
+NOTE: `oc create namespace mystuff` : mystuff라는 새 네임스페이스를 생성합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -259,6 +275,7 @@ oc project mystuff
 Now using project "mystuff" on server "https://172.30.0.1:443".
 ----
 
+NOTE: `oc project mystuff` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 mystuff로 변경합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -274,14 +291,12 @@ deployment.apps/myapp created
 ----
 
 
-NOTE: `oc create namespace mystuff` : mystuff라는 새 네임스페이스를 생성합니다. +
-`oc project mystuff` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 mystuff로 변경합니다. +
-`oc create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1` : quay.io/rhdevelopers/quarkus-demo:v1 이미지를 기반으로 하는 myapp이라는 이름의 `deployment` 를 생성합니다.
+NOTE: `oc create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1` : quay.io/rhdevelopers/quarkus-demo:v1 이미지를 기반으로 하는 myapp이라는 이름의 `deployment` 를 생성합니다.
 
 
 
 [[monitor-events]]
-== while monitoring Events
+== 배포를 진행하는 동안 이벤트를 모니터링하세요.
 
 [#kubectl-get-events]
 [.console-input]
@@ -305,15 +320,18 @@ o:1.0.0"
 15s         Normal   Started             pod/myapp-5dcbf46dfc-ghrk4    Started container quarkus-demo
 ----
 
+NOTE: `watch oc get events` : 클러스터 이벤트를 생성 시간순으로 실시간 모니터링합니다. watch 명령은 주기적으로 결과를 갱신합니다.
+
+
 [[created-objects]]
-== Created Objects
+== 생성된 Objects를 확인하세요.
 
 === Deployments
 [#kubectl-get-deployments]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get deployments
+oc get deployments
 ----
 
 [.console-output]
@@ -323,12 +341,16 @@ NAME    READY   UP-TO-DATE   AVAILABLE   AGE
 myapp   1/1     1            1           95s
 ----
 
+NOTE: `oc get deployments` : 배포된 `deployments` 목록을 확인합니다.
+
+
+
 === Replicasets
 [#kubectl-get-replicasets]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get replicasets
+oc get replicasets
 ----
 
 [.console-output]
@@ -337,6 +359,10 @@ kubectl get replicasets
 NAME               DESIRED   CURRENT   READY   AGE
 myapp-5dcbf46dfc   1         1         1       2m1s
 ----
+
+NOTE: `oc get replicasets` : 배포된 `replicasets` 목록을 확인합니다.
+
+
 
 === Pods
 
