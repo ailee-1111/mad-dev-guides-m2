@@ -141,7 +141,8 @@ ip-10-0-56-21.us-east-2.compute.internal    Ready    control-plane,master   2d1h
 ip-10-0-63-222.us-east-2.compute.internal   Ready    worker                 2d1h   v1.28.14+502c5ce   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=m6a.8xlarge,beta.kubernetes.io/os=linux,cluster.ocs.openshift.io/openshift-storage=,failure-domain.beta.kubernetes.io/region=us-east-2,failure-domain.beta.kubernetes.io/zone=us-east-2a,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-10-0-63-222.us-east-2.compute.internal,kubernetes.io/os=linux,node-role.kubernetes.io/worker=,node.kubernetes.io/instance-type=m6a.8xlarge,node.openshift.io/os_id=rhcos,topology.ebs.csi.aws.com/zone=us-east-2a,topology.kubernetes.io/region=us-east-2,topology.kubernetes.io/zone=us-east-2a,topology.rook.io/rack=rack2[[view-pods]]
 ----
 
-NOTE: `oc get nodes` : 클러스터 내의 모든 노드를 목록으로 출력합니다. + `oc get nodes --show-labels` : 노드의 정보를 출력하면서 각 노드에 적용된 라벨도 표시합니다.
+NOTE: `oc get nodes` : 클러스터 내의 모든 노드를 목록으로 출력합니다. +
+`oc get nodes --show-labels` : 노드의 정보를 출력하면서 각 노드에 적용된 라벨도 표시합니다.
 
 
 
