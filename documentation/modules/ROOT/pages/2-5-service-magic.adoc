@@ -211,7 +211,7 @@ NAME         ENDPOINTS   AGE
 my-service   <none>      2m6s
 ----
 
-[#get-endpoints2]
+[#get-endpoints1]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -221,11 +221,9 @@ oc get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
 [.console-output]
 [source,bash]
 ----
-"10.130.2.43"
-"10.130.2.44"
-"10.130.2.45"
+jq: error (at <stdin>:18): Cannot iterate over null (null)
 ----
-
+NOTE: 현재 Service가 선택할 수 없는 Pod가 없기 때문에 IP 조회가 실패합니다.
 
 
 OpenShift와 같은 호스팅된 Kubernetes 클러스터를 사용하는 경우 `8080` 포트와 함께 `curl` 및 EXTERNAL-IP 주소를 사용하거나 `kubectl(oc)` 을 사용하여 가져옵니다.:
@@ -387,35 +385,35 @@ oc get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
 "10.130.2.45"
 ----
 
+NOTE: Service가 트래픽을 전달할 수 있는 pod 3개의 IP가 모두 확인됩니다.
 
 
-
-See the Pod IPs:
+포드 IP를 확인하세요.:
 
 [#pod-ips]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get pods -o wide
+oc get pods -o wide
 ----
 
 
 
 
-Remove `mypython` Pod from the Service:
+서비스에서 `mypython` 포드를 제거합니다.
 
 [#remove-label]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl label pod -l app=mypython inservice-
+oc label pod -l app=mypython inservice-
 ----
 
 [#get-endpoints3]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
+oc get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
 ----
 
 [.console-output]
@@ -425,11 +423,14 @@ kubectl get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
 "10.130.2.45"
 ----
 
+NOTE: Label이 제거된 Pod의 IP를 제외한 pods IP만 조회됩니다.
+
+
 == Clean Up
 
 [#clean-up]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete namespace funstuff
+oc delete namespace funstuff-%userid%
 ----
