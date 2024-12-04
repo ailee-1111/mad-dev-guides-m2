@@ -26,6 +26,10 @@ image::2-3.png[2-3]
 
 [[talk]]
 == 클러스터에 로그인하고, 설정을 확인하세요.
+
+NOTE: 일반적으로 클러스터에서 oc(kubectl) 명령어를 사용하기 위해서는 `oc login`명령어를 통해 클러스터에 로그인해야 합니다.
+이 실습에서는 OpenShift의 웹콘솔에서 제공하는 웹터미널을 사용하기 때문에(이미 웹콘솔 로그인이 되어 있기 때문에) 로그인 단계가 필요없습니다.
+
 [#kubectl-view-config]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -33,9 +37,66 @@ image::2-3.png[2-3]
 kubectl config view
 ----
 
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    server: https://172.30.0.1:443
+  name: https://172.30.0.1:443
+contexts:
+- context:
+    cluster: https://172.30.0.1:443
+    namespace: openshift-terminal
+    user: admin
+  name: admin-context
+current-context: admin-context
+kind: Config
+preferences: {}
+users:
+- name: admin
+  user:
+    token: REDACTED
+----
+NOTE: 현재 kubectl 설정 파일의 내용을 출력합니다. 여기에는 클러스터, 사용자 인증 정보, 컨텍스트 등의 정보가 포함됩니다.
 
-NOTE: 일반적으로 클러스터에서 oc(kubectl) 명령어를 사용하기 위해서는 `oc login`명령어를 통해 클러스터에 로그인해야 합니다.
-이 실습에서는 OpenShift의 웹콘솔에서 제공하는 웹터미널을 사용하기 때문에(이미 웹콘솔 로그인이 되어 있기 때문에) 로그인 단계가 필요없습니다.
+
+[#kubectl-view-config]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc config view
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    server: https://172.30.0.1:443
+  name: https://172.30.0.1:443
+contexts:
+- context:
+    cluster: https://172.30.0.1:443
+    namespace: openshift-terminal
+    user: admin
+  name: admin-context
+current-context: admin-context
+kind: Config
+preferences: {}
+users:
+- name: admin
+  user:
+    token: REDACTED
+----
+
+NOTE: 기본적으로 `oc` 명령어는 `kubectl` 명령을 포함하고 있기 때문에 두 명령어의 결과는 동일합니다. 또한 `oc`명령어는 `kubectl`에는 포함되어 있지않은 추가 리소스에 대한 명령어도 포함하고 있습니다.
+앞으로의 실습에는 `oc`명령어를 사용합니다.
+
 
 
 [[view-nodes]]
