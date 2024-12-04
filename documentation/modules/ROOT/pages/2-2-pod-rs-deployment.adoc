@@ -219,7 +219,7 @@ Events:
   ----    ------            ----  ----                   -------
   Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-jd6jk
   Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-t26gt
-  Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-**<span style="color:red; font-weight:bold;">mlnng</span>**
+  Normal  SuccessfulCreate  89s   replicaset-controller  Created pod: rs-quarkus-demo-mlnng
 ----
 
 NOTE: Pod는 ReplicaSet에 의해 "소유"됩니다.
@@ -227,14 +227,32 @@ NOTE: Pod는 ReplicaSet에 의해 "소유"됩니다.
 
 이제 Pod를 확인하면서 Pod를 삭제하세요.:
 
+
+[#replicaset-show-labels]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pods 
+----
+
+[.console-output]
+[source,bash]
+----
+NAME                    READY   STATUS    RESTARTS   AGE  
+rs-quarkus-demo-jd6jk   1/1     Running   0          58s   
+rs-quarkus-demo-mlnng   1/1     Running   0          58s   
+rs-quarkus-demo-t26gt   1/1     Running   0          58s   
+----
+
+
 [#delete-pod-rs]
 [.console-input]
 [source,bash]
 ----
-oc delete pod rs-quarkus-demo-**<span style="color:red; font-weight:bold;">mlnng</span>**
+oc delete pod rs-quarkus-demo-mlnng
 ----
 
-IMPORTANT: 명령어의 **<span style="color:red; font-weight:bold;">빨간색 글씨</span>**는 실제 조회된 pod의 값으로 변경해야 합니다.
+IMPORTANT: 명령어의 pod name(rs-quarkus-demo-mlnng 부분)은 실제 조회된 pod의 값으로 변경해야 합니다.
 
 그러면 이를 대체할 새로운 포드가 생겨나게 됩니다.:
 
@@ -247,14 +265,16 @@ rs-quarkus-demo-jd6jk   1/1     Running             0          109s   app=quarku
 rs-quarkus-demo-t26gt   1/1     Running             0          109s   app=quarkus-demo,env=dev
 ----
 
-Delete the ReplicaSet to remove all the associated pods:
+연결된 모든 Pod를 제거하려면 ReplicaSet를 삭제하세요.:
 
 [#delete-rs]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete rs rs-quarkus-demo
+oc delete rs rs-quarkus-demo
 ----
+
+
 
 == Deployment
 
@@ -291,7 +311,7 @@ EOF
 [.console-input]
 [source,bash]
 ----
-kubectl get pods --show-labels
+oc get pods --show-labels
 ----
 
 [.console-output]
@@ -307,7 +327,7 @@ quarkus-demo-deployment-5979886fb7-grf59   1/1     Running   0          17s   ap
 [.console-input]
 [source,bash]
 ----
-kubectl exec -it quarkus-demo-deployment-5979886fb7-c888m -- curl localhost:8080
+oc exec -it quarkus-demo-deployment-5979886fb7-c888m -- curl localhost:8080
 ----
 
 [.console-output]
@@ -316,5 +336,5 @@ kubectl exec -it quarkus-demo-deployment-5979886fb7-c888m -- curl localhost:8080
 Supersonic Subatomic Java with Quarkus quarkus-demo-deployment-5979886fb7-c888m:1
 ----
 
-In the next section, you'll learn the concept of `Service`.
-This is an important element in Kubernetes ecosystem.
+다음 섹션에서는 `Service`의 개념을 배우게 됩니다.
+이는 Kubernetes 생태계에서 중요한 요소입니다.
