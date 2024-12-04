@@ -1,5 +1,5 @@
 * 1. Lab환경
-** xref:1-introduction.adoc[Lab환경설명]
+** xref:1-introduction.adoc[Lab접속방법]
 
 * 2. 초보자
 ** xref:2-1-kubectl.adoc[oc / kubectl]
