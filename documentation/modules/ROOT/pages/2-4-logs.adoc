@@ -1,10 +1,9 @@
 = Logs
 
-There are various "production-ready" ways to do log gathering and viewing across a Kubernetes/OpenShift cluster. Many folks like some flavor of ELK (ElasticSearch, Logstash, Kibana) or EFK (ElasticSearch, FluentD, Kibana).
+Kubernetes/OpenShift 클러스터 전체에서 로그 수집 및 보기를 수행하는 다양한 "프로덕션 준비" 방법이 있습니다.  많은 사람들이 ELK(ElasticSearch, Logstash, Kibana) 또는 EFK(ElasticSearch, FluentD, Kibana)를 좋아합니다.
+여기서 초점은 포드 내에서 실행되는 애플리케이션의 동작을 이해하는 데 도움을 주기 위해 개발자가 액세스해야 하는 작업에 있습니다.
 
-The focus here is on things a developer needs to get access to do in order to help understand the behavior of their application running inside of a pod.
-
-Make sure you have an application (Deployment) running:
+애플리케이션(배포)이 실행 중인지 확인하세요.:
 
 [#create-deployment]
 [.console-input]
@@ -35,23 +34,37 @@ spec:
 EOF
 ----
 
-Make sure you are running 3 replicas (3 pods/instances of your application):
+3개의 복제본(애플리케이션의 3개 포드/인스턴스)을 실행하고 있는지 확인하세요.:
 
 [#logs-get-replicas]
 [.console-input]
 [source, bash]
 ----
-kubectl get deployment my-deployment -o json | jq '.status.replicas'
+oc get deployment my-deployment -o json | jq '.status.replicas'
 ----
 
-If not, scale up to 3:
+[.console-output]
+[source,bash]
+----
+3
+----
+
+그렇지 않은 경우 최대 3개까지 확장하세요.:
 
 [#logs-scale-replicas]
 [.console-input]
 [source, bash]
 ----
-kubectl scale --replicas=3 deployment/my-deployment
+oc scale --replicas=3 deployment/my-deployment
 ----
+
+[#logs-scale-replicas]
+[.console-input]
+[source, bash]
+----
+oc get pod
+----
+
 
 [.console-output]
 [source,bash]
@@ -66,8 +79,11 @@ my-deployment-5dc67997c7-s4jc6   1/1     Running   0          34s
 [.console-input]
 [source, bash]
 ----
-kubectl logs my-deployment-5dc67997c7-m7z9f
+oc logs my-deployment-5dc67997c7-m7z9f
 ----
+
+IMPORTANT: pod 이름( my-deployment-5dc67997c7-m7z9f)은 각 실습 클러스터에서 조회 된 값으로 변경하여 입력하세요.
+
 
 [.console-output]
 [source]
@@ -82,21 +98,28 @@ kubectl logs my-deployment-5dc67997c7-m7z9f
 
 ----
 
-You can follow logs with `-f` parameter:
+NOTE: `-f` 매개변수를 사용하여 로그를 실시간으로 출력할 수 있습니다.
 
 [#logs-log-deployment-follow]
 [.console-input]
 [source, bash]
 ----
-kubectl logs my-deployment-5dc67997c7-m7z9f -f
+oc logs my-deployment-5dc67997c7-m7z9f -f
 ----
 
-And in another Terminal:
+그리고 다른 터미널에서 실행하세요.:
 
 [.console-input]
 [source,bash]
 ----
-kubectl exec -it my-deployment-5dc67997c7-m7z9f /bin/bash
+oc exec -it my-deployment-5dc67997c7-m7z9f /bin/bash
+----
+
+IMPORTANT: pod 이름( my-deployment-5dc67997c7-m7z9f)은 각 실습 클러스터에서 조회 된 값으로 변경하여 입력하세요.
+
+[.console-input]
+[source,bash]
+----
 curl localhost:8080
 ----
 
@@ -106,7 +129,7 @@ curl localhost:8080
 Aloha from my-deployment-5dc67997c7-m7z9f
 ----
 
-Deploy a Service for `my-deployment`:
+'my-deployment'에 대한 서비스를 배포하세요.:
 
 [#create-service]
 [.console-input]
@@ -128,7 +151,7 @@ spec:
 EOF
 ----
 
-In another Terminal, loop and curl that service:
+다른 터미널에서 해당 서비스를 반복하고 curl 하세요.:
 
 :section-k8s: logs
 :service-exposed: the-service
@@ -138,7 +161,7 @@ Start sending the request in a loop:
 
 include::partial$loop.adoc[]
 
-Then use Stern to view the logs across all pods:
+그런 다음 Stern을 사용하여 모든 Pod의 로그를 봅니다.:
 
 [#stern-my-deployment]
 [.console-input]
@@ -156,15 +179,25 @@ my-deployment-5dc67997c7-s4jc6 myapp Aloha from my-deployment-5dc67997c7-s4jc6
 my-deployment-5dc67997c7-s4jc6 myapp Aloha from my-deployment-5dc67997c7-s4jc6
 ----
 
-Another option is https://github.com/boz/kail[kail]:
+또 다른 옵션은 https://github.com/boz/kail[kail]입니다.:
+
+Kail을 설치합니다.:
 
 [#install-kail]
 [.console-input]
 [source, bash]
 ----
 brew tap boz/repo
+----
+
+[#install-kail]
+[.console-input]
+[source, bash]
+----
 brew install boz/repo/kail
 ----
+
+Kail을 실행합니다.:
 
 [#run-kail]
 [.console-input]
@@ -175,14 +208,16 @@ kail --deploy=my-deployment -c myapp --since=1h
 
 [TIP]
 ====
-To potentially pull the logs from a failing pod use `-p`
+실패한 포드에서 로그를 가져오려면 '-p'를 사용하세요.
 
 [.console-input]
 [source,bash]
 ----
-kubectl logs my-deployment-5dc67997c7-s4jc6 -p 
+oc logs my-deployment-5dc67997c7-s4jc6 -p 
 ----
 ====
+
+
 
 == Clean Up
 
@@ -190,6 +225,12 @@ kubectl logs my-deployment-5dc67997c7-s4jc6 -p
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete service the-service
-kubectl delete deployment my-deployment
+oc delete service the-service
+----
+
+[#clean-up]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc delete deployment my-deployment
 ----
