@@ -267,6 +267,25 @@ curl: (7) Failed to connect to 35.224.233.213 port 8000: Connection refused
 
 NOTE: 현재 Service가 참조하는 label을 가진 Pod가 없기 때문에 curl은 실패합니다.
 
+== Terminal#3에서 작업
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project funstuff-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "funstuff-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project funstuff-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 funstuff-%userid%로 변경합니다.
+
+
 [#label-mypython]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -276,6 +295,8 @@ oc label pod -l app=mypython inservice=mypods
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을  Pod(app=mypython)에 설정합니다.
 
+
+== Terminal#1에서 확인
 
 Poll the endpoint:
 
@@ -301,6 +322,8 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mypython)에서 응답합니다.
 
+== Terminal#3에서 작업
+
 [#label-mynode]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -309,6 +332,8 @@ oc label pod -l app=mynode inservice=mypods
 ----
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을  Pod(app=mynode)에 설정합니다.
+
+== Terminal#1에서 확인
 
 Poll the endpoint:
 
@@ -336,6 +361,8 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mypython)에서도 응답합니다.
 
+== Terminal#3에서 작업
+
 [#label-mygo]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -345,6 +372,8 @@ oc label pod -l app=mygo inservice=mypods
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을  Pod(app=mygo)에 설정합니다.
 
+
+== Terminal#1에서 확인
 
 Poll the endpoint:
 
@@ -369,6 +398,9 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 ----
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mygo)에서도 응답합니다.
+
+
+== Terminal#3에서 확인
 
 [#get-endpoints2]
 [.console-input]
