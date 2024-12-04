@@ -2,7 +2,7 @@
 ** xref:1-introduction.adoc[Lab환경설명]
 
 * 2. 초보자
-** xref:/pages/2-1-kubectl.adoc[oc / kubectl]
+** xref:2-1-kubectl.adoc[oc / kubectl]
 ** xref:2-2-pod-rs-deployment.adoc[Pod, ReplicaSet, Deployment]
 ** xref:2-3-service.adoc[Service]
 ** xref:2-4-logs.adoc[Logs]
