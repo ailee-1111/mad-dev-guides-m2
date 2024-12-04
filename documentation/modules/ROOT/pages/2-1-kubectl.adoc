@@ -757,6 +757,7 @@ Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-tcfwp:6
 NOTE: 해당 결과는 터미널 2번에서 확인합니다. 터미널 2번은 지속적으로 3개의 pod로의 curl poling을 시도합니다. application의 이미지를 변경하여 Rolling update가 진행됨에 따라 실시간으로 poling 결과값이 변하는 것을 관찰할 수 있습니다.
 
 === Clean Up
+
 [#delete-namespace]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
