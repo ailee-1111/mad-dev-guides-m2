@@ -1,6 +1,9 @@
 = 1. Introduction - 10 minutes
 :imagesdir: ../assets/images
 
+NOTE: On Minikube without an Ingress controller, <pending> will not become a real external IP.  https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/[Optional: Setup Minikube Ingress]
+
+
 [NOTE]
 ====
 If you've already completed the introduction exercise in the previous module, feel free to skip to the 'Refactor' lab. This exercise is meant to introduce you to the environment and confirm your services are running correctly.
