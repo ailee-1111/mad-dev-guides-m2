@@ -280,7 +280,7 @@ Aloha from Spring Boot! 258 on myboot-d78fb6d58-vqvlb
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete service myboot
+oc delete service myboot
 ----
 
 
@@ -288,7 +288,7 @@ kubectl delete service myboot
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete deployment myboot
+oc delete deployment myboot
 ----
 
 
@@ -296,5 +296,5 @@ kubectl delete deployment myboot
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete deployment myboot-next
+oc delete deployment myboot-next
 ----
