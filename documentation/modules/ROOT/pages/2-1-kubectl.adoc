@@ -149,33 +149,136 @@ NOTE: `oc get nodes` : 클러스터 내의 모든 노드를 목록으로 출력�
 
 
 
-== View out-of-the-box Pods
+== 클러스터에 배포되어 있는 `Pods` 를 확인하세요.
 
-Your Kubernetes vendor likely includes many pods out-of-the-box:
 
 [#kubectl-get-pods]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get pods --all-namespaces
-kubectl get pods --all-namespaces --show-labels
-kubectl get pods --all-namespaces -o wide
+oc get pods --all-namespaces
 ----
 
-[[deploy-app]]
-== Deploy Something
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAMESPACE                                          NAME                                                                       READY   STATUS             RESTARTS          AGE
+3scale                                             apicast-production-1-4t7vl                                                 1/1     Running            3                 2d
+3scale                                             apicast-production-1-deploy                                                0/1     Completed          0                 2d
+3scale                                             apicast-staging-1-deploy                                                   0/1     Completed          0                 2d
+3scale                                             apicast-staging-1-r44lk                                                    1/1     Running            4 (3h15m ago)     2d
+3scale                                             backend-cron-1-54686                                                       1/1     Running            3                 2d
+3scale                                             backend-cron-1-deploy                                                      0/1     Completed          0                 2d
+3scale                                             backend-listener-1-deploy                                                  0/1     Completed          0                 2d
+....생략....
+----
 
-Create a Namespace and Deploy something:
+
+[#kubectl-get-pods]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pods --all-namespaces --show-labels
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAMESPACE                                          NAME                                                                       READY   STATUS             RESTARTS          AGE     LABELS
+3scale                                             apicast-production-1-4t7vl                                                 1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=apicast-production-1,deploymentConfig=apicast-production,deploymentconfig=apicast-production,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=apicast-production,rht.subcomp_t=application,threescale_component=apicast,threescale_component_element=production
+3scale                                             apicast-production-1-deploy                                                0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=apicast-production-1
+3scale                                             apicast-staging-1-deploy                                                   0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=apicast-staging-1
+3scale                                             apicast-staging-1-r44lk                                                    1/1     Running            4 (3h16m ago)     2d      app=3scale-api-management,com.company=Red_Hat,deployment=apicast-staging-1,deploymentConfig=apicast-staging,deploymentconfig=apicast-staging,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=apicast-staging,rht.subcomp_t=application,threescale_component=apicast,threescale_component_element=staging
+3scale                                             backend-cron-1-54686                                                       1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=backend-cron-1,deploymentConfig=backend-cron,deploymentconfig=backend-cron,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=backend-cron,rht.subcomp_t=application,threescale_component=backend,threescale_component_element=cron
+3scale                                             backend-cron-1-deploy                                                      0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=backend-cron-1
+3scale                                             backend-listener-1-deploy                                                  0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=backend-listener-1
+3scale                                             backend-listener-1-xlxh4                                                   1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=backend-listener-1,deploymentConfig=backend-listener,deploymentconfig=backend-listener,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=backend-listener,rht.subcomp_t=application,threescale_component=backend,threescale_component_element=listener
+3scale                                             backend-redis-1-deploy                                                     0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=backend-redis-1
+3scale                                             backend-redis-1-kg9z4                                                      1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=backend-redis-1,deploymentConfig=backend-redis,deploymentconfig=backend-redis,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=backend-redis,rht.subcomp_t=application,threescale_component=backend,threescale_component_element=redis
+...생략...
+----
+
+[#kubectl-get-pods]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pods --all-namespaces -o wide
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAMESPACE                                          NAME                                                                       READY   STATUS             RESTARTS          AGE     IP             NODE                                        NOMINATED NODE   READINESS GATES
+3scale                                             apicast-production-1-4t7vl                                                 1/1     Running            3                 2d      10.129.2.100   ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
+3scale                                             apicast-production-1-deploy                                                0/1     Completed          0                 2d      <none>         ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
+3scale                                             apicast-staging-1-deploy                                                   0/1     Completed          0                 2d      <none>         ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
+3scale                                             apicast-staging-1-r44lk                                                    1/1     Running            4 (3h17m ago)     2d      10.129.2.97    ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
+3scale                                             backend-cron-1-54686                                                       1/1     Running            3                 2d      10.129.2.94    ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
+3scale                                             backend-cron-1-deploy                                                      0/1     Completed          0                 2d      <none>         ip-10-0-63-222.us-east-2.compute.internal   <none>           <none>
+3scale                                             backend-listener-1-deploy                                                  0/1     Completed          0                 2d      <none>         ip-10-0-63-222.us-east-2.compute.internal   <none>           <none>
+3scale                                             backend-listener-1-xlxh4                                                   1/1     Running            3                 2d      10.128.2.87    ip-10-0-63-222.us-east-2.compute.internal   <none>           <none>
+...생략...
+----
+
+
+NOTE: `oc get pods --all-namespaces` : 모든 네임스페이스에서 실행 중인 pod의 정보를 출력합니다. +
+`oc get pods --all-namespaces --show-labels` : 모든 네임스페이스에서 파드 정보를 출력하며, 파드에 적용된 라벨도 함께 표시합니다. +
+`oc get pods --all-namespaces -o wide` : 파드의 정보를 좀 더 상세하게 출력합니다. 예를 들어, 노드의 이름과 IP 주소 등 추가 정보를 보여줍니다.
+
+
+
+[[deploy-app]]
+== 배포를 진행해 보세요.
+
+네임스페이스를 생성하고  deployment를 배포합니다:
 
 [#kubectl-deploy-app]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl create namespace mystuff
-kubectl config set-context --current --namespace=mystuff
-
-kubectl create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1
+oc create namespace mystuff
 ----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+namespace/mystuff created
+----
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project mystuff
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "mystuff" on server "https://172.30.0.1:443".
+----
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+deployment.apps/myapp created
+----
+
+
+NOTE: `oc create namespace mystuff` : mystuff라는 새 네임스페이스를 생성합니다. +
+`oc project mystuff` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 mystuff로 변경합니다. +
+`oc create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1` : quay.io/rhdevelopers/quarkus-demo:v1 이미지를 기반으로 하는 myapp이라는 이름의 `deployment` 를 생성합니다.
+
+
 
 [[monitor-events]]
 == while monitoring Events
@@ -184,7 +287,7 @@ kubectl create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-watch kubectl get events --sort-by=.metadata.creationTimestamp
+watch oc get events --sort-by=.metadata.creationTimestamp
 ----
 
 [.console-output]
