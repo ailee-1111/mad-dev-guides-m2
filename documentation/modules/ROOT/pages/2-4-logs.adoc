@@ -1,9 +1,93 @@
+= OpenShift Logging
+OpenShift Logging은 클러스터의 모든 포드 및 노드에서 로그 메시지를 수집하고 집계합니다. 사용자와 관리자는 OpenShift 웹 콘솔을 사용하여 로그 항목을 검색하고 참조할 수 있습니다.
+
+워크로드 및 클러스터 크기에 따라 많은 로그를 처리하는 데 상당한 디스크 공간과 컴퓨팅 리소스가 필요할 수 있으며, 이러한 경우 애플리케이션 워크로드에 사용할 수 없습니다. 이러한 시나리오에서는 추가 부하를 처리하기 위해 더 많은 계산 노드를 배포하고 스토리지 용량을 늘려야 할 수 있습니다.
+
+로그를 장기 저장을 위해 타사 로그 애그리게이터로 전달하거나 추가 분석을 위해 통합 가시성 플랫폼으로 전달하고 클러스터의 리소스 요구 사항을 최소화하도록 OpenShift Logging을 구성합니다.
+
+다음은 OpenShift Logging에서 로그를 수신할 수 있는 타사 로깅 솔루션의 예입니다.
+
+* Elasticsearch
+
+* Grafana Loki
+
+* Splunk
+
+* Amazon CloudWatch
+
+* Google Cloud Logging
+
+== OpenShift Logging 구성 요소
+OpenShift Logging은 수집기, 로그 저장소, 시각화 콘솔과 같은 구성 요소를 기반으로 합니다. 전체 로깅 솔루션으로 함께 배포하거나 수집기를 단독으로 배포하고 외부 솔루션에 로그를 저장할 수 있습니다.
+
+image::2-6.png[2-6]
+
+* *로그 수집기*
+수집기는 OpenShift Logging의 기본 구성 요소입니다. OpenShift Logging은 Vector를 사용하여 실행 중인 모든 컨테이너 및 클러스터 노드에서 로그를 수집하고, 이전 버전의 OpenShift Logging에서 수집기였던 Fluentd를 대체합니다.
+
+Vector는 클러스터에서 다양한 로그 유형을 수집한 후 다음 범주로 그룹화합니다.
+
+-  *인프라*
+인프라 로그에는 openshift-*, kube*, default 네임스페이스의 컨테이너 로그와 클러스터 노드의 시스템 로그가 포함됩니다.
+
+- *감사*
+감사 로그에는 Kubernetes API 및 OpenShift API 감사 로그와 클러스터 노드의 Linux 감사 로그가 모두 포함됩니다. 이러한 로그에는 중요한 보안 세부 정보가 포함될 수 있으며 OpenShift Logging은 기본적으로 이러한 세부 정보를 저장하지 않습니다.
+
+- *애플리케이션*
+애플리케이션 로그는 모두 사용자 프로젝트의 컨테이너 로그입니다.
+
+이러한 로그를 수집하기 위해 Vector는 클러스터에 설정된 데몬으로 실행되므로 모든 노드에서 실행됩니다.
+
+Vector는 로그 수집 외에도 메타데이터를 추가하여 로그의 출처를 설명하고 로그를 클러스터 내부 또는 외부에 있는 로그 저장소에 전달합니다.
+
+* *로그 저장소*
+로그 저장소는 Grafana Loki를 사용하여 전체 클러스터의 로그를 중앙 위치에 집계하고 로그에 대한 액세스 제어를 제공합니다.
+
+Loki는 이전 버전의 로깅 하위 시스템에서 로그 저장소였던 Elasticsearch를 대체합니다.
+
+내부 로그 저장소는 OpenShift Logging의 선택적 구성 요소입니다.
+
+* *시각화*
+OpenShift Logging은 내부 로그 저장소의 로그를 보고 쿼리할 수 있는 네이티브 OpenShift Console 플러그인을 제공합니다.
+
+OpenShift Logging UI 구성 요소는 이전 버전의 OpenShift Logging에서 웹 인터페이스였던 Kibana를 대체합니다.
+
+
 = Logs
 
-Kubernetes/OpenShift 클러스터 전체에서 로그 수집 및 보기를 수행하는 다양한 "프로덕션 준비" 방법이 있습니다.  많은 사람들이 ELK(ElasticSearch, Logstash, Kibana) 또는 EFK(ElasticSearch, FluentD, Kibana)를 좋아합니다.
-여기서 초점은 포드 내에서 실행되는 애플리케이션의 동작을 이해하는 데 도움을 주기 위해 개발자가 액세스해야 하는 작업에 있습니다.
-
 애플리케이션(배포)이 실행 중인지 확인하세요.:
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc create namespace log-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+namespace/log-%userid% created
+----
+
+NOTE: `oc create namespace log-%userid%` : log-%userid%라는 새 네임스페이스를 생성합니다.
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project log-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "log-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project log-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 log-%userid%로 변경합니다.
+
 
 [#create-deployment]
 [.console-input]
@@ -107,7 +191,24 @@ NOTE: `-f` 매개변수를 사용하여 로그를 실시간으로 출력할 수 
 oc logs my-deployment-5dc67997c7-m7z9f -f
 ----
 
-그리고 다른 터미널에서 실행하세요.:
+그리고 *다른 터미널(Terminal#2)*에서 실행하세요.:
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project log-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "log-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project log-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 log-%userid%로 변경합니다.
+
 
 [.console-input]
 [source,bash]
@@ -129,7 +230,25 @@ curl localhost:8080
 Aloha from my-deployment-5dc67997c7-m7z9f
 ----
 
-'my-deployment'에 대한 서비스를 배포하세요.:
+*다른 터미널(Terminal#3)* 에서 'my-deployment'에 대한 서비스를 배포하세요.:
+
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project log-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "log-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project log-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 log-%userid%로 변경합니다.
+
 
 [#create-service]
 [.console-input]
@@ -151,71 +270,75 @@ spec:
 EOF
 ----
 
-다른 터미널에서 해당 서비스를 반복하고 curl 하세요.:
+해당 서비스를 반복하고 curl 하세요.:
 
-:section-k8s: logs
-:service-exposed: the-service
-include::partial$env-curl.adoc[]
 
-Start sending the request in a loop:
 
-include::partial$loop.adoc[]
-
-그런 다음 Stern을 사용하여 모든 Pod의 로그를 봅니다.:
-
-[#stern-my-deployment]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-stern my-deployment
+IP=$(kubectl get service the-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
 ----
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+PORT=$(kubectl get service the-service -o jsonpath="{.spec.ports[*].port}")
+----
+
+
+[#poll-endpoint]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+while true
+do curl $IP:$PORT
+sleep 0.8
+done
+----
+
+
+그런 다음 -f 옵션을 사용하여 Pod의 실시간 로그를 봅니다.:
+
+
+
+
+
+[#logs-log-deployment-follow]
+[.console-input]
+[source, bash]
+----
+oc logs my-deployment-5dc67997c7-m7z9f -f
+----
+
+NOTE: `-f` 매개변수를 사용하여 로그를 실시간으로 출력할 수 있습니다.
+
+IMPORTANT: pod 이름( my-deployment-5dc67997c7-m7z9f)은 각 실습 클러스터에서 조회 된 값으로 변경하여 입력하세요.
+
 
 [.console-output]
-[source,bash]
+[source,bash,subs="+macros,+attributes"]
 ----
-my-deployment-5dc67997c7-5bq4n myapp Aloha from my-deployment-5dc67997c7-5bq4n
-my-deployment-5dc67997c7-m7z9f myapp Aloha from my-deployment-5dc67997c7-m7z9f
-my-deployment-5dc67997c7-s4jc6 myapp Aloha from my-deployment-5dc67997c7-s4jc6
-my-deployment-5dc67997c7-s4jc6 myapp Aloha from my-deployment-5dc67997c7-s4jc6
-----
-
-또 다른 옵션은 https://github.com/boz/kail[kail]입니다.:
-
-Kail을 설치합니다.:
-
-[#install-kail]
-[.console-input]
-[source, bash]
-----
-brew tap boz/repo
-----
-
-[#install-kail]
-[.console-input]
-[source, bash]
-----
-brew install boz/repo/kail
+Aloha from my-deployment-59cb8f6c56-bfrg7 124
+Aloha from my-deployment-59cb8f6c56-bfrg7 125
+Aloha from my-deployment-59cb8f6c56-bfrg7 126
+Aloha from my-deployment-59cb8f6c56-bfrg7 127
+Aloha from my-deployment-59cb8f6c56-bfrg7 128
+Aloha from my-deployment-59cb8f6c56-bfrg7 129
+Aloha from my-deployment-59cb8f6c56-bfrg7 130
+Aloha from my-deployment-59cb8f6c56-bfrg7 131
+Aloha from my-deployment-59cb8f6c56-bfrg7 132
+Aloha from my-deployment-59cb8f6c56-bfrg7 133
+Aloha from my-deployment-59cb8f6c56-bfrg7 134
+Aloha from my-deployment-59cb8f6c56-bfrg7 135
+Aloha from my-deployment-59cb8f6c56-bfrg7 136
+Aloha from my-deployment-59cb8f6c56-bfrg7 137
+Aloha from my-deployment-59cb8f6c56-bfrg7 138
+Aloha from my-deployment-59cb8f6c56-bfrg7 139
+Aloha from my-deployment-59cb8f6c56-bfrg7 140
 ----
 
-Kail을 실행합니다.:
-
-[#run-kail]
-[.console-input]
-[source, bash]
-----
-kail --deploy=my-deployment -c myapp --since=1h
-----
-
-[TIP]
-====
-실패한 포드에서 로그를 가져오려면 '-p'를 사용하세요.
-
-[.console-input]
-[source,bash]
-----
-oc logs my-deployment-5dc67997c7-s4jc6 -p 
-----
-====
 
 
 
