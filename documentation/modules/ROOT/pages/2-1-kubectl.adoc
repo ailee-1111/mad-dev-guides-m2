@@ -1,6 +1,6 @@
 = oc / kubectl : 쿠버네티스 클라이언트
 
-* kubectl
+* 'kubectl':
  kubernetes에서 기본적으로 제공 및 사용하는 CLI(CommandLine Interface)입니다. Kubernetes API와 상호작용하여 클러스터를 관리하는 데 사용됩니다.
 표준 Kubernetes 명령어를 지원하며, 모든 kubernetes기반의 클러스터에서 동작합니다.
 
