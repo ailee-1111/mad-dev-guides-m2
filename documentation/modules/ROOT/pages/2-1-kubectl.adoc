@@ -547,10 +547,13 @@ Supersonic Subatomic Java with Quarkus myapp-b484fbf6-25kcz:1
 IMPORTANT: curl 명령어를 수행하여 app이 hosting하고 있는 문구를 확인합니다.
 
 
+
 == Application 확장
 
 명령줄 터미널에서 +버튼을 눌러 3개의 터미널 창을 엽니다.
+
 image::2-4.png[2-4]
+
 
 
 === Terminal 1번
