@@ -321,7 +321,7 @@ NOTE: `oc get pods --all-namespaces` : 모든 네임스페이스에서 실행 �
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc create namespace mystuff
+oc create namespace mystuff-%userid%
 ----
 
 [.console-output]
@@ -336,16 +336,16 @@ NOTE: `oc create namespace mystuff` : mystuff라는 새 네임스페이스를 �
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc project mystuff
+oc project mystuff-%userid%
 ----
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
-Now using project "mystuff" on server "https://172.30.0.1:443".
+Now using project "mystuff-%userid%" on server "https://172.30.0.1:443".
 ----
 
-NOTE: `oc project mystuff` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 mystuff로 변경합니다.
+NOTE: `oc project mystuff-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 mystuff로 변경합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
