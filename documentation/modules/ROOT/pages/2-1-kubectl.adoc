@@ -14,7 +14,7 @@ oc 명령을 사용하면 터미널에서 애플리케이션을 생성하고 Red
 
 * 웹 콘솔을 사용할 수 없는 경우
 
-* routes 및 deployment configs와 같은 OpenShift 리소스 작업
+* routes 및 deployment configs와 같은 OpenShift 리소스 작업 +
 
 
 
