@@ -120,7 +120,7 @@ Make sure you are in the correct namespace:
 
 include::partial$set-context.adoc[]
 
-Make sure nothing else is deployed:
+다른 것이 배포되지 않았는지 확인하세요.
 
 [#no-resources-live-ready]
 [.console-input]
