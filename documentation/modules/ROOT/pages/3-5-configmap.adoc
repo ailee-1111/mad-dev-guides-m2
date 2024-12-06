@@ -1,14 +1,55 @@
+= 애플리케이션 구성 외부화
+
+== Kubernetes 애플리케이션 구성
+애플리케이션이 기존 이미지를 사용하여 Kubernetes에서 실행되는 경우 애플리케이션은 기본 구성을 사용합니다. 이 작업은 테스트를 위한 것입니다. 그러나 프로덕션 환경의 경우 배포하기 전에 애플리케이션을 사용자 지정해야 할 수 있습니다.
+
+Kubernetes에서는 JSON 및 YAML 형식의 매니페스트를 사용하여 각 애플리케이션에 대해 의도한 구성을 지정할 수 있습니다. 애플리케이션의 이름, 레이블, 이미지 소스, 스토리지, 환경 변수 등을 정의할 수 있습니다.
+
+애플리케이션에서 파일 조합을 구성해야 하는 경우가 있습니다. 예를 들어 생성 시에는 데이터베이스 배포에 데이터베이스 및 데이터가 미리 로드되어 있어야 합니다. 일반적으로는 환경 변수, 외부 파일 또는 명령줄 인수를 사용하여 애플리케이션을 구성합니다. 애플리케이션이 실행되는 환경에서 컨테이너 이미지, 외부 파일, 환경 변수를 사용할 수 있는 경우 이 구성 외부화 프로세스를 통해 여러 환경에 걸쳐 애플리케이션을 이식할 수 있습니다.
+
+Kubernetes는 구성 맵 및 시크릿을 사용하여 애플리케이션의 구성을 외부화하는 메커니즘을 제공합니다.
+
+구성 맵을 사용하여 컨테이너에 구성 데이터를 삽입할 수 있습니다. 네임스페이스가 지정된 ConfigMap (구성 맵) 오브젝트는 컨테이너에 구성 데이터를 삽입하는 방법을 제공하여 컨테이너의 플랫폼 독립성을 유지하는 데 도움이 됩니다. 이러한 오브젝트는 개별 특성 등의 세분화된 정보나 전체 구성 파일 또는 JSON Blob(JSON 섹션) 등의 개괄적인 정보를 저장할 수 있습니다. 구성 맵의 정보는 보호하지 않아도 됩니다.
+
+애플리케이션에서 중요한 정보에 액세스해야 하는 경우가 종종 있습니다. 예를 들어 백엔드 웹 애플리케이션에서는 데이터베이스를 쿼리하기 위해 데이터베이스 자격 증명에 액세스해야 합니다. Kubernetes 및 OpenShift에서는 시크릿을 사용하여 중요한 정보를 보관합니다. 예를 들어 시크릿을 사용하여 다음 유형의 중요한 정보를 저장할 수 있습니다.
+
+* 암호
+
+* 중요한 구성 파일
+
+* SSH 키 또는 OAuth 토큰과 같은 외부 리소스에 대한 자격 증명
+
+시크릿은 네임스페이스가 지정된 오브젝트이며 모든 유형의 데이터를 저장할 수 있습니다. 시크릿의 데이터는 Base64로 인코딩되며 일반 텍스트로 저장되지 않습니다. 시크릿 데이터는 암호화되지 않습니다. Base64 형식의 시크릿을 디코딩하여 원본 데이터에 액세스할 수 있습니다. 
+
+Kubernetes 및 OpenShift는 다음 유형의 시크릿을 지원합니다.
+
+* 불투명 시크릿: 임의의 값을 포함하고 키 이름 또는 값에 대한 규칙을 준수하도록 검증되지 않은 불투명 시크릿 저장소 키 및 값 쌍입니다.
+
+* 서비스 계정 토큰: Kubernetes API에 인증하는 애플리케이션의 토큰 자격 증명을 저장합니다.
+
+* 기본 인증 시크릿: 기본 인증에 필요한 자격 증명을 저장합니다. 시크릿 개체의 데이터 매개 변수에는 Base64 포맷으로 인코딩된 사용자 및 암호 키가 포함되어야 합니다.
+
+* SSH 키: SSH 인증에 사용되는 데이터를 저장합니다.
+
+* TLS 인증서: TLS에 사용되는 인증서 및 키를 저장합니다.
+
+* Docker 구성 시크릿: 컨테이너 이미지 레지스트리에 액세스하기 위한 자격 증명을 저장합니다.
+
+특정 시크릿 리소스 유형에 정보를 저장하는 경우 Kubernetes는 데이터가 시크릿 유형에 맞는지 확인합니다.
+
+
+
 = ConfigMap
 
-ConfigMap is the Kubernetes resource that allows you to externalize your application's configuration.
+ConfigMap은 애플리케이션 구성을 외부화할 수 있는 Kubernetes 리소스입니다.
 
-*_An app’s config is everything that is likely to vary between deploys (staging, production, developer environments, etc)._*
+*_앱 구성은 배포마다 달라질 수 있는 모든 것입니다(스테이징, 프로덕션, 개발자 환경 등)._*
 
 https://12factor.net/config[12 Factor Apps]
 
-== Environment Variables
+== 환경 변수(Environment Variables)
 
-MyRESTController.java includes a small chunk of code that looks to the environment
+MyRESTController.java에는 환경을 살펴보는 작은 코드 덩어리가 포함되어 있습니다.
 
 [source,java]
 ----
@@ -26,8 +67,7 @@ MyRESTController.java includes a small chunk of code that looks to the environme
    }
 ----
 
-Environment variables can be manipulated at the Deployment level. 
-Changes cause Pod redeployment.
+환경 변수는 배포 수준에서 조작할 수 있습니다.  변경사항으로 인해 Pod 재배포가 발생합니다.
 
 Deploy `myboot`:
 
@@ -35,7 +75,7 @@ Deploy `myboot`:
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-deployment.yml
+oc create -f apps/kubefiles/myboot-deployment.yml
 ----
 
 Deploy `myboot` Service:
@@ -51,6 +91,10 @@ And watch the pods status:
 
 :section-k8s: configmap
 include::partial$watching-pods.adoc[]
+
+
+
+
 
 Ask the application for its configuration:
 
@@ -75,7 +119,7 @@ greeting=Default
 love=Default
 ----
 
-== Set Environment Variables
+== 환경 변수 설정
 
 [#set-env-vars]
 [.console-input]
@@ -86,7 +130,7 @@ kubectl set env deployment/myboot GREETING="namaste" \
   DBCONN="jdbc:sqlserver://45.91.12.123:1443;user=MyUserName;password=*****;"
 ----
 
-Watch the pods being reborn:
+Pod가 다시 시작하는 모습을 지켜보세요.
 
 [.console-output]
 [source,bash]
@@ -226,20 +270,20 @@ Amour
 Events:  <none>
 ----
 
-.Using `kubectl edit` to view resources
+.'kubectl edit'을 사용하여 리소스 보기
 ****
-For large files you might find using `kubectl edit` is more convenient for viewing resources on the cluster.  In our case, we can view the config map by running the following (and aborting any changes!):
+대용량 파일의 경우 'kubectl edit'을 사용하는 것이 클러스터의 리소스를 보는 데 더 편리할 수 있습니다.  우리의 경우 다음을 실행하여 구성 맵을 볼 수 있습니다(그리고 모든 변경 사항을 중단합니다!).
 
 include::partial$tip_vscode_kube_editor.adoc[]
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl edit cm my-config
+oc edit cm my-config
 ----
 ****
 
-Now deploy the app with its request for the `ConfigMap`:
+이제 `ConfigMap`에 대한 요청을 사용하여 앱을 배포합니다.
 
 [#deploy-myboot-configmap-configmaps]
 [.console-input]
@@ -267,7 +311,8 @@ greeting=jambo
 love=Amour
 ----
 
-And switch to the other properties file by recreating the `ConfigMap`:
+그리고 `ConfigMap`을 다시 생성하여 다른 속성 파일로 전환합니다.
+
 
 [#delete-pod-configmap-configmaps]
 [.console-input]
@@ -295,7 +340,8 @@ hello=Default
 love=Default
 ----
 
-There are a lot more ways to have fun with ConfigMaps. The core documentation has you manipulate a Pod specification instead of a Deployment, but the results are basically the same:
+ConfigMap을 재미있게 즐길 수 있는 방법은 훨씬 더 많습니다.  핵심 문서에서는 배포 대신 Pod 사양을 조작하도록 되어 있지만 결과는 기본적으로 동일합니다.
+
 https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap
 
 
