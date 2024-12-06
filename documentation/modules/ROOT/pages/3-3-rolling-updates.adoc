@@ -118,6 +118,14 @@ EOF
 
 == Terminal#1에서 작업 : Pod를 지켜보세요.
 
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project resource-%userid%
+----
+
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
