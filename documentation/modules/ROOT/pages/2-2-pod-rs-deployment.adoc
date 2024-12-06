@@ -6,7 +6,7 @@
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc create namespace myspace-%userid%
+oc new-project myspace-%userid%
 ----
 
 [#create-namespace]
