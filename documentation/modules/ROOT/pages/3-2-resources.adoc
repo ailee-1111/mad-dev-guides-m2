@@ -131,7 +131,7 @@ kind: Deployment
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc create namespace resource-%userid%
+oc new-project resource-%userid%
 ----
 
 [.console-output]
@@ -140,7 +140,7 @@ oc create namespace resource-%userid%
 namespace/resource-%userid% created
 ----
 
-NOTE: `oc create namespace resource-%userid%` : resource-%userid%라는 새 네임스페이스를 생성합니다.
+NOTE: `oc new-project resource-%userid%` : resource-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
