@@ -1,19 +1,19 @@
 = StatefulSets
-include::_attributes.adoc[]
-:watch-terminal: Terminal 2
 
-A `StatefulSet` provides a unique identity to the Pods that they manage.
-`StatefulSet` s are particularly useful when your application requires a unique network identifier or persistent storage across Pod (re)scheduling or when your application needs some guarantee about the ordering of deployment and scaling.
+'StatefulSet'은 관리하는 포드에 고유한 ID를 제공합니다.
+`StatefulSet`은 애플리케이션이 포드 (재)스케줄링 전반에 걸쳐 고유한 네트워크 식별자 또는 영구 저장소를 요구하거나 애플리케이션이 배포 및 확장 순서에 대해 어느 정도 보장이 필요할 때 특히 유용합니다.
 
-One of the most typical examples of using `StatefulSet` s is when one needs to deploy primary/secondary servers (i.e database cluster) where you need to know beforehand the hostname of each of the servers to start the cluster.
-Also, when you scale up and down you want to do it in a specified order (i.e you want to start the primary node first and then the secondary node).
+`StatefulSet`을 사용하는 가장 일반적인 예 중 하나는 클러스터를 시작하기 위해 각 서버의 호스트 이름을 미리 알아야 하는 기본/보조 서버(예: 데이터베이스 클러스터)를 배포해야 하는 경우입니다. 또한 확장할 때  위아래로 지정된 순서대로 수행하려는 경우(즉, 기본 노드를 먼저 시작한 다음 보조 노드를 시작하려는 경우)
+
 
 [IMPORTANT]
 ====
-`StatefulSet` requires a Kubernetes _Headless Service_ instead of a standard Kubernetes _service_ in order for it to be accessed.  We will discuss this more below
+'StatefulSet'에 액세스하려면 표준 Kubernetes _service_ 대신 Kubernetes _Headless Service_가 필요합니다.  이에 대해서는 아래에서 더 자세히 논의하겠습니다.
 ====
 
 == Preparation
+
+
 
 === Namespace Setup
 
