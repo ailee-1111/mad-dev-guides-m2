@@ -1,49 +1,221 @@
 = Rolling updates
 
-Make sure you are in the correct namespace
+IMPORTANT: 이 실습은 직전의 `Resources and Limits` 실습 환경을 이어서 사용합니다.
 
-:section-k8s: rolling
-:set-namespace: myspace
-include::partial$set-context.adoc[]
+올바른 네임스페이스에 있는지 확인하세요.
 
-[TIP,subs="attributes+,+macros"]
-====
-If you just came from xref::resources.adoc[the Resources and Limits section, window=_blank] then you should already have the pods and deployments active that you need.  If not, you will need run the following commands to deploy the needed elements into {set-namespace}
-====
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project resource-%userid%
+----
 
-Deploy the Spring Boot app if needed:
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "resource-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project resource-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 resource-%userid%로 변경합니다.
+
+
+
 
 [#deploy-myboot-rolling]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-deployment-resources-limits.yml
-kubectl apply -f apps/kubefiles/myboot-service.yml
+oc get deployment
 ----
 
-*Terminal 1*: watch the Pods.
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pod
+----
 
-include::partial$watching-pods.adoc[]
-
-*Terminal 2*: curl loop the service.
-
-:service-exposed: myboot
-
-include::partial$env-curl.adoc[]
-
-And run loop script:
-
-include::partial$loop.adoc[]
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get service
+----
 
 
-*Terminal 3* : Run commands.
+[TIP,subs="attributes+,+macros"]
+====
+방금 `Resources and Limits`에서 왔다면 필요한 Pod 및 배포 그리고 서비스가 이미 활성화되어 있어야 합니다. +
+그렇지 않은 경우 다음 명령을 실행하여 필요한 요소를 `resource-%userid%` 에 배포해야 합니다.
+====
 
-Describe (or `kubectl edit`) the Deployment:
 
-:describe-deployment-name: myboot
-:section-k8s: rolling-init
 
-include::partial$describe-deployment.adoc[]
+필요한 경우 Spring Boot 앱을 배포합니다.
+
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+    spec:
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        ports:
+          - containerPort: 8080
+        resources:
+          requests: 
+            memory: "300Mi" 
+            cpu: "250m" # 1/4 core
+          # NOTE: These are the same limits we tested our Docker Container with earlier
+          # -m matches limits.memory and --cpus matches limits.cpu
+          limits:
+            memory: "900Mi"
+            cpu: "2000m" # 2 core
+EOF
+----
+
+
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: myboot
+  labels:
+    app: myboot    
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: myboot
+  type: LoadBalancer
+EOF
+----
+
+
+
+== Terminal#1에서 작업 : Pod를 지켜보세요.
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "resource-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project resource-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 resource-%userid%로 변경합니다.
+
+
+
+[#sysresources-sane-limit-resource]
+[.console-input]
+[source, bash]
+----
+watch -n 1 -- oc get pods
+----
+
+
+
+
+== Terminal#2에서 작업 : 반복적으로 서비스에 curl을 시도하세요.
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project resource-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "resource-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project resource-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 resource-%userid%로 변경합니다.
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+IP=$(kubectl get service myboot -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+----
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+PORT=$(kubectl get service myboot -o jsonpath="{.spec.ports[*].port}")
+----
+
+
+Poll the endpoint:
+
+[#poll-endpoint]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+while true
+do curl $IP:$PORT
+sleep 0.8
+done
+----
+
+
+
+
+
+
+== Terminal#3에서 작업 : 명령을 실행합니다.
+
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project resource-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "resource-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project resource-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 resource-%userid%로 변경합니다.
+
+deployment의 정보를 확인합니다.
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc describe deployment myboot
+----
+
 
 // The .no-query-replace tells the course ui to not attempt to replace tokens between % %
 [.no-query-replace]
@@ -62,9 +234,11 @@ RollingUpdateStrategy:  25% max unavailable, 25% max surge
 .
 ----
 
-`StrategyType` options include `RollingUpdate` and `Recreate`:
+NOTE: `StrategyType` 옵션에는 `RollingUpdate` 및 `Recreate`가 포함됩니다.
 
-Change the replicas:
+
+
+replicas를 변경합니다.:
 
 include::partial$tip_vscode_kube_editor.adoc[]
 
@@ -72,10 +246,11 @@ include::partial$tip_vscode_kube_editor.adoc[]
 [.console-input]
 [source, bash]
 ----
-kubectl edit deployment myboot
+oc edit deployment myboot
 ----
 
-Look for "replicas":
+
+"replicas" 항목을 찾으세요:
 
 [.console-output]
 [source,yaml]
@@ -89,7 +264,8 @@ spec:
       app: myboot
 ----
 
-And update to "2":
+replicas 값을  "2"로 변경합니다.
+
 
 [.console-output]
 [source, yaml]
@@ -103,13 +279,20 @@ spec:
       app: myboot
 ----
 
-Save and close your editor and a new pod will come to life:
+TIP: 편집기의 단축키는 아래와 같습니다. +
+* *`i`* : 입력모드로 전환(커서 앞에서 입력 시작) +
+- 입력모드 전환 후, 방향키로 커서를 이동 및 `백스페이스`로 문자 삭제 가능 +
+* *`w`* : 파일 저장 +
+* *`q`* : 파일 종료 +
+
+
+편집기를 저장하고 닫으면 새 포드가 활성화됩니다.
 
 [#edit-deployment-replicas-get-pod-rolling]
 [.console-input]
 [source, bash]
 ----
-kubectl get pods
+oc get pods
 ----
 
 [.console-output]
@@ -120,16 +303,16 @@ myboot-d78fb6d58-2fqml   1/1     Running   0          25s
 myboot-d78fb6d58-ljkjp   1/1     Running   0          3m
 ----
 
-Change the image associated with the deployment:
+배포와 관련된 이미지를 변경합니다.
 
 [#edit-deployment-v2-rolling]
 [.console-input]
 [source, bash]
 ----
-kubectl edit deployment myboot
+oc edit deployment myboot
 ----
 
-Find the image attribute:
+image 속성 부분을 찾으세요.:
 
 [source, yaml]
 ----
@@ -140,7 +323,7 @@ Find the image attribute:
         name: myboot
 ----
 
-and change the image `myboot:v2`:
+그리고 `myboot:v2` 이미지를 변경하세요.:
 
 [source, yaml]
 ----
@@ -151,11 +334,19 @@ and change the image `myboot:v2`:
         name: myboot
 ----
 
+
+TIP: 편집기의 단축키는 아래와 같습니다. +
+* *`i`* : 입력모드로 전환(커서 앞에서 입력 시작) +
+- 입력모드 전환 후, 방향키로 커서를 이동 및 `백스페이스`로 문자 삭제 가능 +
+* *`w`* : 파일 저장 +
+* *`q`* : 파일 종료 +
+
+
 [#edit-deployment-v2-get-pod-rolling]
 [.console-input]
 [source, bash]
 ----
-kubectl get pods
+oc get pods
 ----
 
 [.console-output]
@@ -168,7 +359,7 @@ myboot-d78fb6d58-2fqml    1/1     Running             0          3m29s
 myboot-d78fb6d58-ljkjp    1/1     Terminating         0          8m
 ----
 
-And the output from terminal 2:
+Terminal#2의 출력을 확인하세요.
 
 [.console-output]
 [source,bash]
@@ -179,13 +370,13 @@ Bonjour from Spring Boot! 0 on myboot-7fbc4b97df-4ntmk
 Bonjour from Spring Boot! 1 on myboot-7fbc4b97df-4ntmk
 ----
 
-Check the status of the deployment:
+배포 상태를 확인합니다.
 
 [#rollout-v2-rolling]
 [.console-input]
 [source, bash]
 ----
-kubectl rollout status deployment myboot
+oc rollout status deployment myboot
 ----
 
 [.console-output]
@@ -194,13 +385,13 @@ kubectl rollout status deployment myboot
 deployment "myboot" successfully rolled out
 ----
 
-Notice that there is a new RS:
+새로운 Replicasets가 있다는 점에 유의하세요.
 
 [#rs-v2-rolling]
 [.console-input]
 [source, bash]
 ----
-kubectl get rs
+oc get rs
 ----
 
 [.console-output]
@@ -211,15 +402,16 @@ myboot-7fbc4b97df   2         2         2       116s
 myboot-d78fb6d58    0         0         0       10m
 ----
 
-Describe the Deployment:
+Deployment 정보를 확인하세요.:
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc describe deployment myboot
+----
 
 
-:describe-deployment-name: myboot
-:section-k8s: rolling
-
-include::partial$describe-deployment.adoc[]
-
-And check out the Events section:
+그리고 이벤트 섹션을 확인해 보세요.:
 
 [.console-output]
 [source,bash]
@@ -236,24 +428,24 @@ Events:
   Normal  ScalingReplicaSet  2m37s  deployment-controller  Scaled down replica set myboot-d78fb6d58 to 0
 ----
 
-You can list the revisions associated to your deployment by running the following command:
+다음 명령을 실행하여 배포와 관련된 개정을 나열할 수 있습니다.
 [#rollout-history]
 [.console-input]
 [source, bash]
 ----
-kubectl rollout history deployment/myboot
+oc rollout history deployment/myboot
 ----
 
-You can rollback to v1 using the following command:
+다음 명령을 사용하여 v1으로 롤백할 수 있습니다.
 
 [#describe-rollback-rolling]
 [.console-input]
 [source, bash]
 ----
-kubectl rollout undo deployment/myboot --to-revision=1
+oc rollout undo deployment/myboot --to-revision=1
 ----
 
-And it rolls back to Aloha:
+그리고 Aloha로 롤백됩니다.:
 
 [.console-output]
 [source,bash]
@@ -262,38 +454,4 @@ Bonjour from Spring Boot! 501 on myboot-7fbc4b97df-qtkzj
 Bonjour from Spring Boot! 502 on myboot-7fbc4b97df-qtkzj
 Aloha from Spring Boot! 0 on myboot-d78fb6d58-vnlch
 ----
-
-[IMPORTANT] 
-====
-On minikube, you may receive errors from curl during the rollover activity.
-
-[.console-output]
-[source,bash]
-----
-Aloha from Spring Boot! 119 on myboot-d78fb6d58-2zp4h
-curl: (7) Failed to connect to 192.168.99.100 port 31528: Connection refused
-----
-
-The reason is the the missing Live and Ready Probes
-
-Try using the Quarkus image instead of the Spring Boot one
-
-[#describe-rollback-quarkus-rolling]
-[.console-input]
-[source, bash]
-----
-kubectl set image deployment/myboot myboot=quay.io/rhdevelopers/quarkus-demo:v1
-----
-
-And there should be no errors, Quarkus simply boots up crazy fast
-
-[.console-output]
-[source,bash]
-----
-Aloha from Spring Boot! 62 on myboot-d78fb6d58-smb7h
-Aloha from Spring Boot! 63 on myboot-d78fb6d58-smb7h
-Supersonic Subatomic Java with Quarkus myboot-5cf696848b-tlt6l:1
-Supersonic Subatomic Java with Quarkus myboot-5cf696848b-tlt6l:2
-----
-====
 
