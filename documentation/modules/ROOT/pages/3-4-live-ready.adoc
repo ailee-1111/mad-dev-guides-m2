@@ -519,7 +519,6 @@ oc set image deployment/myboot myboot=quay.io/rhdevelopers/myboot:v3
 [.console-output]
 [source.bash]
 ----
-watch kubectl get pods
 NAME                      READY   STATUS    RESTARTS   AGE
 myboot-56659c9d69-6sglj   1/1     Running   0          2m2s
 myboot-56659c9d69-mdllq   1/1     Running   0          97s
