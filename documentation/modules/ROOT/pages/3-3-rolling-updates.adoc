@@ -248,7 +248,6 @@ NOTE: `StrategyType` 옵션에는 `RollingUpdate` 및 `Recreate`가 포함됩니
 
 replicas를 변경합니다.:
 
-include::partial$tip_vscode_kube_editor.adoc[]
 
 [#edit-deployment-replicas-rolling]
 [.console-input]
