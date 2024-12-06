@@ -69,6 +69,62 @@ MyRESTController.java에는 환경을 살펴보는 작은 코드 덩어리가 �
 
 환경 변수는 배포 수준에서 조작할 수 있습니다.  변경사항으로 인해 Pod 재배포가 발생합니다.
 
+
+
+네임스페이스를 생성 후, 올바른 네임스페이스에 있는지 확인하세요.
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc new-project ev-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+namespace/ev-%userid% created
+----
+
+NOTE: `oc new-project ev-%userid%` : ev-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project ev-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "ev-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project ev-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 ev-%userid%로 변경합니다.
+
+
+
+네임스페이스에서 아무것도 실행되고 있지 않은지 확인하세요.
+
+[#no-resources-resource]
+[.console-input]
+[source, bash]
+----
+oc get all
+----
+
+[.console-output]
+[source,bash]
+----
+No resources found in myspace namespace.
+----
+
+
+
+
+
 Deploy `myboot`:
 
 [#deploy-myboot-configmaps]
@@ -76,31 +132,84 @@ Deploy `myboot`:
 [source,bash,subs="+macros,+attributes"]
 ----
 oc create -f apps/kubefiles/myboot-deployment.yml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+    spec:
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        ports:
+          - containerPort: 8080
+EOF
 ----
 
-Deploy `myboot` Service:
 
-[#deploy-myboot-service-configmaps]
+Service를 배포하세요:
+
+[#deploy-myboot-rolling]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-service.yml
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: myboot
+  labels:
+    app: myboot    
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: myboot
+  type: LoadBalancer
+EOF
 ----
 
-And watch the pods status:
-
-:section-k8s: configmap
-include::partial$watching-pods.adoc[]
 
 
+그리고 Pod 상태를 확인하세요.
 
 
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pod
+----
 
-Ask the application for its configuration:
 
-:section-k8s: configmaps
-:service-exposed: myboot
-include::partial$env-curl.adoc[]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+IP=$(kubectl get service myboot -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+----
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+PORT=$(kubectl get service myboot -o jsonpath="{.spec.ports[*].port}")
+----
+
+
+애플리케이션에 구성내용을 요청하세요.
+
 
 [#get-config-configmaps]
 [.console-input]
@@ -119,18 +228,30 @@ greeting=Default
 love=Default
 ----
 
+NOTE : 현재 설정되어 있는 Application의 환경 변수값을 확인 할 수 있습니다.
+
+
+
 == 환경 변수 설정
 
 [#set-env-vars]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set env deployment/myboot GREETING="namaste" \
+oc set env deployment/myboot GREETING="namaste" \
   LOVE="Aloha" \
   DBCONN="jdbc:sqlserver://45.91.12.123:1443;user=MyUserName;password=*****;"
 ----
 
-Pod가 다시 시작하는 모습을 지켜보세요.
+Pod가 다시 시작하는 모습을 확인하세요.
+
+[#deploy-myboot-rolling]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pod
+----
+
 
 [.console-output]
 [source,bash]
@@ -139,6 +260,10 @@ NAME                      READY   STATUS        RESTARTS   AGE
 myboot-66d7d57687-jsbz7   1/1     Terminating   0          5m
 myboot-785ff6bddc-ghwpc   1/1     Running       0          13s
 ----
+
+
+애플리케이션에 구성내용을 요청하세요.
+
 
 [#get-config2-configmaps]
 [.console-input]
@@ -157,12 +282,17 @@ greeting=namaste
 love=Aloha
 ----
 
-Describe the deployment:
+NOTE: 환경변수 값이 변경된 것을 확인할 수 있습니다.
 
-:section-k8s: configmaps
-:describe-deployment-name: myboot
+배포의 정보를 확인합니다.
 
-include::partial$describe-deployment.adoc[]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc describe deployment myboot
+----
+
+
 
 [.console-output]
 [source,bash]
@@ -182,18 +312,18 @@ include::partial$describe-deployment.adoc[]
 ...  
 ----
 
-Remove environment variables:
+환경 변수를 제거합니다.
 
 [#remove-env-vars-configmaps]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set env deployment/myboot GREETING- \
+oc set env deployment/myboot GREETING- \
   LOVE- \
   DBCONN-
 ----
 
-And verify that they have been removed:
+그리고 제거되었는지 확인합니다.
 
 [#get-config3-configmaps]
 [.console-input]
@@ -212,23 +342,59 @@ greeting=Default
 love=Default
 ----
 
-==  Create a ConfigMap
+
+
+
+
+== Clean Up
+
+[#clean-configmaps]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+kubectl delete deployment myboot
+----
+
+
+
+
+==  ConfigMap 생성하기
 
 [#create-configmap-configmaps]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl create cm my-config --from-env-file=apps/config/some.properties
+oc create configmap my-config --from-literal=GREETING=jambo --from-literal=LOVE=Amour
 ----
+
+
+configmap의 리스트를 확인하고, 생성된 configmap이 있는지 확인합니다.
+TIP: 명령어 사용시,  `configmap` 은 줄여서 `cm` 으로 사용할 수 있습니다.
 
 [#get-configmap-configmaps]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get cm
-kubectl get cm my-config
-kubectl get cm my-config -o json
+oc get cm
 ----
+
+
+[#get-configmap-configmaps]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get cm my-config
+----
+
+생성된 configmap의 값을 json 포맷으로 확인합니다.
+
+[#get-configmap-configmaps]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get cm my-config -o json
+----
+
 
 [.console-output]
 [source,bash]
@@ -242,13 +408,13 @@ kubectl get cm my-config -o json
 ...    
 ----
 
-Or you can describe the `ConfigMap` object:
+또는 `ConfigMap` 개체를 `describe` 할 수 있습니다.
 
 [#describe-configmap-configmaps]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl describe cm my-config
+oc describe cm my-config
 ----
 
 [.console-output]
@@ -274,8 +440,6 @@ Events:  <none>
 ****
 대용량 파일의 경우 'kubectl edit'을 사용하는 것이 클러스터의 리소스를 보는 데 더 편리할 수 있습니다.  우리의 경우 다음을 실행하여 구성 맵을 볼 수 있습니다(그리고 모든 변경 사항을 중단합니다!).
 
-include::partial$tip_vscode_kube_editor.adoc[]
-
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -289,10 +453,41 @@ oc edit cm my-config
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-deployment-configuration.yml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+    spec:
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1  
+        ports:
+          - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: my-config
+EOF
 ----
 
-And get its configure endpoint:
+
+NOTE: `spec` > `containers` > `envFom` 에 configmap이 포함된 것을 확인할 수 있습니다.
+
+
+
+
+그리고 구성 Endpoint를 가져옵니다.
 
 [#get-config4-configmaps]
 [.console-input]
@@ -318,10 +513,27 @@ love=Amour
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete cm my-config
-kubectl create cm my-config --from-env-file=apps/config/other.properties
-kubectl delete pod -l app=myboot --wait=false
+oc delete cm my-config
 ----
+
+[#delete-pod-configmap-configmaps]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc create configmap my-config --from-literal=DBCONN=jdbc:sqlserver://123.123.123.123:1443 --from-literal=user=MyUserName --from-literal=password=***** --from-literal=MSGBROKER=tcp://localhost:61616?jms.useAsyncSend=true
+----
+
+[#delete-pod-configmap-configmaps]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc delete pod -l app=myboot --wait=false
+----
+
+NOTE: pod는 deployment/replicaset에서 관리되고 있으므로, 삭제되는 즉시 재생성 됩니다. 
+
+
+구성 Endpoint를 확인합니다.
 
 [#get-config5-configmaps]
 [.console-input]
@@ -351,7 +563,7 @@ https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete deployment myboot
-kubectl delete cm my-config
-kubectl delete service myboot
+oc delete deployment myboot
+oc delete cm my-config
+oc delete service myboot
 ----
