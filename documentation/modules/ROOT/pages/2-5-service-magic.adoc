@@ -7,7 +7,7 @@
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc create namespace funstuff-%userid%
+oc new-project funstuff-%userid%
 ----
 
 [.console-output]
@@ -16,7 +16,7 @@ oc create namespace funstuff-%userid%
 namespace/funstuff-%userid% created
 ----
 
-NOTE: `oc create namespace funstuff-%userid%` : funstuff-%userid%라는 새 네임스페이스를 생성합니다.
+NOTE: `oc new-project funstuff-%userid%` : funstuff-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
