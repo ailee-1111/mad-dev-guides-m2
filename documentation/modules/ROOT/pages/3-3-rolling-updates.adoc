@@ -410,7 +410,7 @@ oc rollout status deployment myboot
 deployment "myboot" successfully rolled out
 ----
 
-새로운 Replicasets가 있다는 점에 유의하세요.
+새로운 Replicasets가 있는 것을 확인하세요.
 
 [#rs-v2-rolling]
 [.console-input]
@@ -459,6 +459,15 @@ Events:
 [source, bash]
 ----
 oc rollout history deployment/myboot
+----
+
+[.console-output]
+[source,bash]
+----
+deployment.apps/myboot 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
 ----
 
 다음 명령을 사용하여 v1으로 롤백할 수 있습니다.
