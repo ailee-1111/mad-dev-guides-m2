@@ -62,7 +62,7 @@ OpenShift Logging UI 구성 요소는 이전 버전의 OpenShift Logging에서 �
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc create namespace log-%userid%
+oc new-project log-%userid%
 ----
 
 [.console-output]
@@ -71,7 +71,7 @@ oc create namespace log-%userid%
 namespace/log-%userid% created
 ----
 
-NOTE: `oc create namespace log-%userid%` : log-%userid%라는 새 네임스페이스를 생성합니다.
+NOTE: `oc new-project  log-%userid%` : log-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
