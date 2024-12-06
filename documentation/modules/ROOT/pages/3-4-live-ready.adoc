@@ -113,56 +113,181 @@ Kubernetes는 애플리케이션이 실패한 후에도 프로브를 계속 실�
 
 = Liveness & Readiness
 
-Make sure you are in the correct namespace:
+네임스페이스를 생성 후, 올바른 네임스페이스에 있는지 확인하세요.
 
-:section-k8s: liveready
-:set-namespace: myspace
 
-include::partial$set-context.adoc[]
-
-다른 것이 배포되지 않았는지 확인하세요.
-
-[#no-resources-live-ready]
+[#kubectl-deploy-app]
 [.console-input]
-[source, bash]
+[source,bash,subs="+macros,+attributes"]
 ----
-kubectl get all
+oc new-project probe-%userid%
 ----
 
 [.console-output]
-[source.bash]
+[source,bash,subs="+macros,+attributes"]
+----
+namespace/probe-%userid% created
+----
+
+NOTE: `oc new-project probe-%userid%` : probe-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project probe-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "probe-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project probe-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 probe-%userid%로 변경합니다.
+
+
+
+네임스페이스에서 아무것도 실행되고 있지 않은지 확인하세요.
+
+[#no-resources-resource]
+[.console-input]
+[source, bash]
+----
+oc get all
+----
+
+[.console-output]
+[source,bash]
 ----
 No resources found in myspace namespace.
 ----
 
-:quick-open-file: myboot-deployment-live-ready.yml
 
-Now we're going to deploy our application with a Liveness and Readiness probe set.  Take a look at `{quick-open-file}`
 
-include::partial$tip_vscode_quick_open.adoc[]
+
+
+
+
+
+
+
+
+이제 Liveness 및 Readiness 프로브 세트를 사용하여 애플리케이션을 배포하겠습니다.  아래의 배포 yaml을 살펴보세요.
+
 
 [.console-output]
 [source,yaml]
 .{quick-open-file}
 ----
-include::example$myboot-deployment-live-ready.yml[]
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+        env: dev
+    spec:
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "300Mi"
+            cpu: "250m" # 1/4 core
+          limits:
+            memory: "400Mi"
+            cpu: "1000m" # 1 core
+        livenessProbe:
+          httpGet:
+              port: 8080
+              path: /alive
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:  
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 3
 ----
 
-Now apply this deployment with the following command
+NOTE: `livenessProbe:` 와 `readinessProbe:` 섹션이 추가 된 것을 확인할 수 있습니다.
+
+
+이제 다음 명령을 사용하여 이 배포를 적용합니다.
 
 [#create-app-live-ready]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-deployment-live-ready.yml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+        env: dev
+    spec:
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "300Mi"
+            cpu: "250m" # 1/4 core
+          limits:
+            memory: "400Mi"
+            cpu: "1000m" # 1 core
+        livenessProbe:
+          httpGet:
+              port: 8080
+              path: /alive
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:  
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 3
+EOF
 ----
 
-Describe the deployment:
 
-:describe-deployment-name: myboot
-:section-k8s: live-ready
 
-include::partial$describe-deployment.adoc[]
+deployment의 정보를 확인합니다.
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc describe deployment myboot
+----
+
 
 [.console-output]
 [source.bash]
@@ -182,33 +307,93 @@ include::partial$describe-deployment.adoc[]
 ...    
 ----
 
-Deploy a Service:
 
-[#deploy-service-live-ready]
+
+Service를 배포하세요:
+
+[#deploy-myboot-rolling]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-service.yml
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: myboot
+  labels:
+    app: myboot    
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: myboot
+  type: LoadBalancer
+EOF
 ----
 
-:section-k8s: liveready
-:service-exposed: myboot
-include::partial$env-curl.adoc[]
 
-And run loop script:
+== Terminal#2에서 작업 : 반복적으로 서비스에 curl을 시도하세요.
 
-include::partial$loop.adoc[]
 
-Change the image:
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project resource-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "resource-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project resource-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 resource-%userid%로 변경합니다.
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+IP=$(kubectl get service myboot -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+----
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+PORT=$(kubectl get service myboot -o jsonpath="{.spec.ports[*].port}")
+----
+
+
+Poll the endpoint:
+
+[#poll-endpoint]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+while true
+do curl $IP:$PORT
+sleep 0.8
+done
+----
+
+
+== Terminal#1에서 작업 
+
+이미지를 변경하세요.
 
 [#change-deployment-v2-live-ready]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set image deployment/myboot myboot=quay.io/rhdevelopers/myboot:v2
+oc set image deployment/myboot myboot=quay.io/rhdevelopers/myboot:v2
 ----
 
-And notice the error free rolling update:
+오류 없는 롤링 업데이트를 확인하세요.
+
+
+== Terminal#2에서 확인
 
 [.console-output]
 [source.bash]
@@ -224,16 +409,18 @@ Aloha from Spring Boot! 137 on myboot-845968c6ff-9wvt9
 Bonjour from Spring Boot! 3 on myboot-8449d5468d-m88z4
 ----
 
-Look at the Endpoints to see which pods are part of the Service:
+== Terminal#1에서 작업
+
+서비스의 일부인 Pod를 확인하려면 엔드포인트를 살펴보세요.
 
 [#get-endpoints-before]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get endpoints myboot -o json | jq '.subsets[].addresses[].ip'
+oc get endpoints myboot -o json | jq '.subsets[].addresses[].ip'
 ----
 
-These are the Pod IPs that have passed their readiness probes:
+준비 상태 프로브를 통과한 Pod IP는 다음과 같습니다.
 
 [.console-output]
 [source.bash]
@@ -243,16 +430,37 @@ These are the Pod IPs that have passed their readiness probes:
 "10.130.2.38"
 ----
 
+
+
+
 == Readiness Probe
 
-Exec into a single Pod and change its readiness flag:
+단일 Pod를 'exec'옵션으로 실행하고 준비 상태 플래그를 변경합니다.
 
 [#misbehave-app-live-ready]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl exec -it myboot-845968c6ff-k5lcb /bin/bash
+oc get pod
 ----
+
+[.console-output]
+[source.bash]
+----
+NAME                      READY   STATUS    RESTARTS   AGE
+myboot-845968c6ff-9wshg   1/1     Running   0          11m
+myboot-845968c6ff-k5lcb   1/1     Running   0          12m
+myboot-845968c6ff-zsgx2   1/1     Running   0          11m
+----
+
+[#misbehave-app-live-ready]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc exec -it myboot-845968c6ff-k5lcb /bin/bash
+----
+
+IMPORTANT: 명령어의 pod name(myboot-845968c6ff-k5lcbg 부분)은 실제 조회된 pod의 값으로 변경해야 합니다.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -261,7 +469,11 @@ curl localhost:8080/misbehave
 exit
 ----
 
-See that the pod is no longer Ready:
+
+NOTE: 명령어는 해당 Pod의 readiness probe에 더이상 정상적으로 응답할 수 없도록 만듭니다.
+
+
+해당 Pod가 준비 상태가 되지 못하는 것을 확인합니다.
 
 [.console-output]
 [source.bash]
@@ -272,16 +484,16 @@ myboot-845968c6ff-k5lcb   0/1     Running   0          12m
 myboot-845968c6ff-zsgx2   1/1     Running   0          11m
 ----
 
-Now check the Endpoints:
+이제 엔드포인트를 확인하세요.
 
 [#get-endpoints-after]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get endpoints myboot -o json | jq '.subsets[].addresses[].ip'
+oc get endpoints myboot -o json | jq '.subsets[].addresses[].ip'
 ----
 
-And that pod is now missing from the Service's loadbalancer:
+이제 해당 포드가 서비스의 로드 밸런서에서 누락되었습니다.
 
 [.console-output]
 [source.bash]
@@ -290,26 +502,20 @@ And that pod is now missing from the Service's loadbalancer:
 "10.130.2.38"
 ----
 
-Which is also self-evident in the curl loop:
 
-[.console-output]
-[source.bash]
-----
-Aloha from Spring Boot! 845 on myboot-845968c6ff-9wshg
-Aloha from Spring Boot! 604 on myboot-845968c6ff-zsgx2
-Aloha from Spring Boot! 846 on myboot-845968c6ff-9wshg
-----
 
 == Liveness Probe
+
+deployment의 이미지를 변경합니다.
 
 [#change-deployment-v3-live-ready]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl set image deployment/myboot myboot=quay.io/rhdevelopers/myboot:v3
+oc set image deployment/myboot myboot=quay.io/rhdevelopers/myboot:v3
 ----
 
-Let the rollout finish to completion across all 3 replicas:
+3개 복제본 모두에서 롤아웃이 완료될 때까지 기다립니다.
 
 [.console-output]
 [source.bash]
@@ -321,7 +527,10 @@ myboot-56659c9d69-mdllq   1/1     Running   0          97s
 myboot-56659c9d69-zjt6q   1/1     Running   0          72s
 ----
 
-And as seen in the curl loop/poller:
+ curl loop/poller에서 이미지 변경에 따른 변화를 볼 수 있습니다.:
+
+
+
 
 [.console-output]
 [source.bash]
@@ -331,18 +540,17 @@ Jambo from Spring Boot! 26 on myboot-56659c9d69-zjt6q
 Jambo from Spring Boot! 71 on myboot-56659c9d69-6sglj
 ----
 
-Edit the Deployment to point to the /alive URL:
+/alive URL을 가리키도록 배포를 편집합니다.
 
-include::partial$tip_vscode_kube_editor.adoc[]
 
 [#change-liveness-v3-live-ready]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl edit deployment myboot
+oc edit deployment myboot
 ----
 
-And change the liveness probe:
+그리고 활성 프로브를 변경합니다.
 
 [.console-output]
 [source.bash]
@@ -366,12 +574,16 @@ And change the liveness probe:
 ...
 ----
 
-Save and close the editor, allowing that change to rollout:
+
+
+
+
+해당 변경 사항을 롤아웃할 수 있도록 편집기를 저장하고 닫습니다.
 
 [.console-input]
 [source,bash]
 ----
-watch kubectl get pods
+watch oc get pods
 ----
 
 [.console-output]
@@ -383,14 +595,17 @@ myboot-558b4f8678-qbrgc   1/1     Running       0          81s
 myboot-558b4f8678-z7f9n   1/1     Running       0          36s
 ----
 
-Now pick one of the pods, `exec` into it and shoot it:
+이제 포드 중 하나를 선택하고 'exec'로 실행합니다.
 
 [#shot-v3-live-ready]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl exec -it myboot-558b4f8678-qbrgc /bin/bash
+oc exec -it myboot-558b4f8678-qbrgc /bin/bash
 ----
+
+IMPORTANT: 명령어의 pod name(myboot-558b4f8678-qbrgc 부분)은 실제 조회된 pod의 값으로 변경해야 합니다.
+
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -398,7 +613,16 @@ kubectl exec -it myboot-558b4f8678-qbrgc /bin/bash
 curl localhost:8080/shot
 ----
 
-And you will see it get restarted:
+NOTE: 해당 명령어는 Liveness probe에 정상적인 응답을 할 수 없도록 조치합니다.
+
+그리고 livenessProbe의 실패로 인해 Pod가 다시 시작되는 것을 볼 수 있습니다:
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get pod
+----
+
 
 [.console-output]
 [source.bash]
@@ -409,39 +633,9 @@ myboot-558b4f8678-qbrgc   1/1     Running   1          4m29s
 myboot-558b4f8678-z7f9n   1/1     Running   0          3m44s
 ----
 
-Plus, your exec will be terminated:
 
-[.console-input]
-[source,bash]
-----
-kubectl exec -it myboot-558b4f8678-qbrgc /bin/bash
-----
+NOTE: 해당 Pod가 재시작되어 "RESTARTS" 카운트가 1로 변경된 것을 확인할 수 있습니다.
 
-[.console-output]
-[source.bash]
-----
-curl localhost:8080/shot
-----
-
-[.console-output]
-[source.bash]
-----
-I have been shot in the head1000610000@myboot-558b4f8678-qbrgc:/app$ command terminated with exit code 137
-----
-
-And your end-users will not see any errors:
-
-[.console-output]
-[source.bash]
-----
-Jambo from Spring Boot! 174 on myboot-558b4f8678-z7f9n
-Jambo from Spring Boot! 11 on myboot-558b4f8678-qbrgc
-Jambo from Spring Boot! 12 on myboot-558b4f8678-qbrgc
-Jambo from Spring Boot! 206 on myboot-558b4f8678-nw762
-Jambo from Spring Boot! 207 on myboot-558b4f8678-nw762
-Jambo from Spring Boot! 175 on myboot-558b4f8678-z7f9n
-Jambo from Spring Boot! 176 on myboot-558b4f8678-z7f9n
-----
 
 == Clean up
 
