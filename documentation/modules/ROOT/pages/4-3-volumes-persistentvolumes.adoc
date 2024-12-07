@@ -19,23 +19,9 @@ Kubernetes 볼륨은 Pod의 컨테이너에 액세스할 수 있는 디렉터리
 
 === Namespace
 
-네임스페이스를 생성 후, 올바른 네임스페이스에 있는지 확인하세요.
+올바른 네임스페이스에 있는지 확인하세요.
 
-
-[#kubectl-deploy-app]
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-oc new-project volume-%userid%
-----
-
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-namespace/volume-%userid% created
-----
-
-NOTE: `oc new-project volume-%userid%` : volume-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
+IMPORTANT: volume-%userid% 네임스페이스는 미리 생성되어 있습니다.
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -644,7 +630,7 @@ NAME          READY   STATUS    RESTARTS   AGE     IP            NODE           
 myboot-demo   1/1     Running   0          4m19s   10.131.0.29   ip-10-0-27-23.us-east-2.compute.internal   <none>           <none>
 ----
 
-노드로 ssh 접속합니다.
+노드로  접속합니다.
 
 [.console-input]
 [source,bash]
@@ -807,7 +793,7 @@ cat <<EOF | oc create -f -
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: my-persistent-volume
+  name: my-persistent-volume11
   labels:
     type: local
 spec:
@@ -817,7 +803,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/mnt/persistent-volume"
+    path: "/mnt/persistent-volume11"
 EOF
 ----
 
@@ -827,8 +813,6 @@ EOF
 oc get pv -w
 ----
 
-
-
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -836,31 +820,98 @@ NAME                                       CAPACITY   ACCESS MODES   RECLAIM POL
 my-persistent-volume                       100Mi      RWO            Retain           Available                                                   pv-demo                 5s
 ----
 
+IMPORTANT: 해당 `PersistentVolume`은 관리자에 의해 미리 생성되어 있으며, `%userid%` 계정은 PV API에 대한 권한이 없습니다.
 
-:mount-dir: /mnt/persistent-volume
 
-Once the volume is established, let's update our file watch terminal to look in the volume's new location: `{mount-dir}`
 
-[tabs]
-====
-{file-watch-terminal}::
-+
---
 
-Hit kbd:[CTRL+c] to exit out of the current watch
 
-Then start a new watch
 
-include::partial$file-watch-command.adoc[]
---
-====
+볼륨이 설정되면 파일 감시 터미널을 업데이트하여 볼륨의 새 위치를 살펴보겠습니다.
+
+
+
+
+다음 새 watch를 시작해 보세요.
+
+
+== Terminal#2에서 수행
+
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project volume-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "volume-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project volume-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 volume-%userid%로 변경합니다.
+
+
+우선 pod가 배포되어 있는 노드를 확인합니다.
+
+
+[.console-input]
+[source,bash]
+----
+oc get pod -o wide
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME          READY   STATUS    RESTARTS   AGE     IP            NODE                                       NOMINATED NODE   READINESS GATES
+myboot-demo   1/1     Running   0          4m19s   10.131.0.29   ip-10-0-27-23.us-east-2.compute.internal   <none>           <none>
+----
+
+노드로  접속합니다.
+
+[.console-input]
+[source,bash]
+----
+oc debug node/ip-10-0-27-23.us-east-2.compute.internal
+chroot /host
+---
+
+NOTE: oc debug node 명령어는 node를 디버깅하기 위한 pod를 생성하고 노드에 접속합니다.
+
+
+이제 노드에 있으므로 Pod가 `/tmp/demo`로 마운트한 `{mount-dir}` 디렉터리를 살펴보겠습니다.
+
+[.console-input]
+[source,bash]
+----
+watch -n1 -- "ls -al /mnt/persistent-volume11 && eval ""cat /mnt/persistent-volume11/greeting.txt"""
+----
+
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+drwxr-xr-x. 2 root root  6 Dec  7 09:32 .
+drwxr-xr-x. 3 root root 18 Dec  7 09:32 ..
+cat: /mnt/data/greeting.txt: No such file or directory
+----
+
+NOTE: 아직 파일이 확인되지 않습니다.
+
+watch -n1 -- "ls -al {mount-dir} && eval ""cat {mount-dir}/greeting.txt"""
+
+
+
 
 :quick-open-file: myboot-persistent-volume-claim.yaml
 
-Then from the dev side, we need to claim what we need from the _PV_.
-In the following example, we are requesting for *10Mi* space.  See `{quick-open-file}`:
+그런 다음 개발 측에서는 _PV_에서 필요한 것을 요청해야 합니다.
+다음 예에서는 *10Mi* 공간을 요청합니다. 
 
-include::partial$tip_vscode_quick_open.adoc[]
 
 [source, yaml]
 .{quick-open-file}
@@ -882,9 +933,25 @@ spec:
 [.console-input]
 [source,bash]
 ----
-kubectl apply -f apps/kubefiles/myboot-persistent-volume-claim.yaml
+cat <<EOF | oc create -f -
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: myboot-volumeclaim
+spec:
+  storageClassName: pv-demo 
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+EOF
+----
 
-kubectl get pvc -w
+[.console-input]
+[source,bash]
+----
+oc get pvc -w
 ----
 
 [.console-output]
@@ -894,14 +961,15 @@ NAME                 STATUS   VOLUME                 CAPACITY   ACCESS MODES   S
 myboot-volumeclaim   Bound    my-persistent-volume   100Mi      RWO            pv-demo        3s
 ----
 
-:quick-open-file: myboot-pod-volume-pvc.yaml
 
-The big difference is that now in the pod you are just defining in the `volumes` section, not the volume configuration directly, but the _persistent volume claim_ to use.  See `{quick-open-file}`:
 
-include::partial$tip_vscode_quick_open.adoc[]
+
+
+가장 큰 차이점은 이제 포드에서 볼륨 구성을 직접 정의하는 것이 아니라 사용할 _영구 볼륨 클레임_을 `volumes` 섹션에서 정의한다는 것입니다.
+
+
 
 [source, yaml]
-.{quick-open-file}
 ----
 apiVersion: v1
 kind: Pod
@@ -925,9 +993,32 @@ spec:
 [.console-input]
 [source,bash]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-volume-pvc.yaml
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo
+    image: quay.io/rhdevelopers/myboot:v4
+    
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
 
-kubectl describe pod myboot-demo
+  volumes:
+  - name: demo-volume
+    persistentVolumeClaim:
+      claimName: myboot-volumeclaim
+EOF
+----
+
+
+[.console-input]
+[source,bash]
+----
+oc describe pod myboot-demo
 ----
 
 [.console-output]
@@ -940,17 +1031,32 @@ Volumes:
     ReadOnly:   false
 ----
 
-Notice that now the description of the pod shows that the volume is not set directly but through a persistent volume claim.
+이제 포드 설명에 볼륨이 직접 설정되지 않고 지속적인 볼륨 청구를 통해 설정된다는 내용이 표시됩니다.
 
-include::partial$create-greeting-file.adoc[]
 
-And as soon as we've done that we'll expect to see the following on the path on the node that the `PersistentVolume` maps to: 
+[.console-input]
+[source,bash]
+----
+oc exec -ti myboot-demo -- /bin/bash
+----
 
-[tabs]
-====
-{file-watch-terminal}::
-+
---
+그런 다음 Pod 내에서 '/tmp/demo' 디렉터리에 일부 콘텐츠를 생성합니다.
+
+[.console-input]
+[source,bash]
+----
+curl localhost:8080/appendgreetingfile
+----
+
+
+
+그리고 이 작업을 완료하자마자 `PerciousVolume`이 매핑되는 노드의 경로에 다음이 표시될 것으로 예상됩니다.
+
+
+==Terminal#3에서 실행.
+
+
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -994,6 +1100,12 @@ Even though the pod has been deleted, the PVC (and the PV) are still there and n
 kubectl delete -f apps/kubefiles/myboot-persistent-volume-claim.yaml
 kubectl delete -f apps/kubefiles/demo-persistent-volume-hostpath.yaml
 ----
+
+
+
+
+
+
 
 == Static vs Dynamic Provisioning
 
