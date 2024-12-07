@@ -1,3 +1,27 @@
+
+= Kubernetes cron 작업을 통한 클러스터 및 노드 유지 관리
+Kubernetes cron 작업을 사용하여 일반 클러스터 및 애플리케이션 관리 작업을 자동화할 수 있습니다.
+
+==유지 관리 작업
+클러스터 관리자는 예약된 작업을 사용하여 클러스터의 유지 관리 작업을 자동화할 수 있습니다. 다른 사용자는 정기적인 애플리케이션 유지 관리를 위해 예약된 작업을 생성할 수 있습니다.
+
+유지 관리 작업은 작업에 따라 필요한 권한이 다릅니다. 클러스터 유지 관리 작업에는 권한 있는 포드가 필요하지만 대부분의 애플리케이션에는 상승된 권한이 필요하지 않을 수 있습니다.
+
+== Kubernetes 배치 API 리소스
+표준 Kubernetes Job 및 CronJob을 사용하여 OpenShift에서 작업을 자동화할 수 있습니다. 자동화된 작업은 한 번 또는 정기적으로 실행되도록 구성할 수 있습니다.
+
+* *Jobs*
+Kubernetes 작업에서 한 번 실행되는 작업을 지정합니다.
+https://kubernetes.io/docs/concepts/workloads/controllers/job/[Kuernetes 문서:Jobs]
+
+
+* *CronJobs*
+Kubernetes cron 작업에는 정기적으로 작업을 실행하는 일정이 있습니다.
+
+cron 작업 실행이 완료되면 Kubernetes는 작업 리소스를 생성합니다. Kubernetes는 cron 작업 정의에 있는 템플릿에서 이러한 작업을 생성합니다. 이러한 관계 외에 Kubernetes 작업 및 cron 작업은 배포 또는 데몬 집합과 같은 워크로드 리소스 유형입니다.
+
+
+
 = Jobs & CronJobs
 include::_attributes.adoc[]
 :watch-terminal: Terminal 2
