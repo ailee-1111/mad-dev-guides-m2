@@ -96,23 +96,6 @@ TIP: `-o wide` 옵션을 사용하면 포드가 예약된 노드를 볼 수 있�
 
 
 
-=== Multi-node (minikube)
-
-클러스터가 여러 노드를 실행 중이고 외부에서 서비스에 연결할 수 있도록 특정 노드에 상태 저장 서비스를 할당해야 하는 경우 'NODE'를 상태 저장 서비스를 실행하지 않으려는 노드의 이름으로 바꾸세요.  ~에
-
-[.console-input]
-[source,bash,subs="+macros,+attributes"]
-----
-NODE=devnation-02 #<.>
-kubectl taint node pass:[${NODE}] app=quarkus-statefulset:NoExecute
-----
-<.> 이를 교체하거나 Stateful 세트를 할당하지 않으려는 클러스터의 모든 노드에 대해 반복합니다.  외부 참조:taints-affinity.adoc[Taints 및 Affinity 섹션, window=_blank]도 참조하세요.
-
-
-
-
-
-
 
 == StatefulSet
 
