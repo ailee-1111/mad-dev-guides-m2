@@ -228,7 +228,7 @@ metadata:
   namespace: myspace-%userid%
 spec:
   rules:
-    - host: stuff-myspace-%userid%.apps.cluster-xjckc.xjckc.sandbox898.opentlc.com
+    - host: stuff-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
       http:
         paths:
           - path: /
@@ -246,7 +246,7 @@ EOF
 [.console-input]
 [source, bash]
 ----
-curl stuff-myspace-%userid%.apps.cluster-xjckc.xjckc.sandbox898.opentlc.com
+curl stuff-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
 ----
 
 [.console-output]
