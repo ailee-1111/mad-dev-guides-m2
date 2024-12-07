@@ -2,13 +2,11 @@
 include::_attributes.adoc[]
 :watch-terminal: Terminal 2
 
-Most of the time, you are using Kubernetes as a platform to run "long" processes where their purpose is to serve responses for a given incoming request.
+대부분의 경우 Kubernetes를 지정된 수신 요청에 대한 응답을 제공하는 것이 목적인 "긴" 프로세스를 실행하는 플랫폼으로 사용하고 있습니다.
+그러나 Kubernetes를 사용하면 일부 논리(예: 데이터베이스 업데이트, 일괄 처리 등)를 실행하고 종료하는 것이 목적인 프로세스를 실행할 수도 있습니다.
 
-But Kubernetes also lets you run processes that their purpose is to execute some logic (i.e. update database, batch processing, ...) and die.
+Kubernetes Job은 일부 논리를 한 번 실행하는 작업입니다.  Kubernetes CronJob은 Cron 패턴에 따라 반복되는 작업입니다.
 
-Kubernetes Jobs are tasks that execute some logic once. 
-
-Kubernetes CronJobs are Jobs that are repeated following a Cron pattern.
 
 == Preparation
 
@@ -23,6 +21,8 @@ include::partial$namespace-setup-tip.adoc[]
 
 include::partial$set-context.adoc[]
 
+
+
 === Watch Terminal
 
 To be able to observe what's going on, let's open another terminal (*{watch-terminal}*) and `watch` what happens as we run our different jobs
@@ -30,6 +30,8 @@ To be able to observe what's going on, let's open another terminal (*{watch-term
 :section-k8s: cronjobs
 
 include::partial$watching-pods-with-nodes.adoc[]
+
+
 
 == Jobs
 
