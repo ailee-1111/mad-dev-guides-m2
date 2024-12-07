@@ -24,8 +24,6 @@ cron 작업 실행이 완료되면 Kubernetes는 작업 리소스를 생성합�
 
 
 = Jobs & CronJobs
-include::_attributes.adoc[]
-:watch-terminal: Terminal 2
 
 대부분의 경우 Kubernetes를 지정된 수신 요청에 대한 응답을 제공하는 것이 목적인 "긴" 프로세스를 실행하는 플랫폼으로 사용하고 있습니다.
 그러나 Kubernetes를 사용하면 일부 논리(예: 데이터베이스 업데이트, 일괄 처리 등)를 실행하고 종료하는 것이 목적인 프로세스를 실행할 수도 있습니다.
@@ -37,62 +35,130 @@ Kubernetes Job은 일부 논리를 한 번 실행하는 작업입니다.  Kubern
 
 === Namespace Setup
 
-Make sure you are in the correct namespace:
 
-:section-k8s: resource
-:set-namespace: myspace
 
-include::partial$namespace-setup-tip.adoc[]
+네임스페이스를 생성 후, 올바른 네임스페이스에 있는지 확인하세요.
 
-include::partial$set-context.adoc[]
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc new-project jobs-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+namespace/jobs-%userid% created
+----
+
+NOTE: `oc new-project jobs-%userid%` : jobs-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project jobs-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "jobs-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project jobs-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 jobs-%userid%로 변경합니다.
+
+
+
+네임스페이스에서 아무것도 실행되고 있지 않은지 확인하세요.
+
+[#no-resources-resource]
+[.console-input]
+[source, bash]
+----
+oc get all
+----
+
+[.console-output]
+[source,bash]
+----
+No resources found in myspace namespace.
+----
+
 
 
 
 === Watch Terminal
 
-To be able to observe what's going on, let's open another terminal (*{watch-terminal}*) and `watch` what happens as we run our different jobs
+무슨 일이 일어나고 있는지 관찰할 수 있도록 다른 Terminal#2를 열고 다양한 작업을 실행할 때 어떤 일이 일어나는지 `관찰`해 보겠습니다.
 
-:section-k8s: cronjobs
 
-include::partial$watching-pods-with-nodes.adoc[]
+===Terminal#2에서 작업
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+watch -n 1 "oc get pods -o wide \
+  | awk '{print \$1 \" \" \$2 \" \" \$3 \" \" \$5 \" \" \$7}' | column -t"
+----
+
+
+TIP: `-o wide` 옵션을 사용하면 포드가 예약된 노드를 볼 수 있습니다. +
+줄이 너무 길어지는 것을 방지하기 위해 `awk`와 `column`을 사용하여 원하는 열만 가져오고 형식을 지정합니다.
 
 
 
 == Jobs
 
-:quick-open-file: whalesay-job.yaml
-
-A Job is created using the Kubernetes `Job` resource.  To examine one, open the `{quick-open-file}`.  Here are the interesting aspects of this file:
-
-include::partial$tip_vscode_quick_open.adoc[]
 
 [source, yaml]
 .{quick-open-file}
 ----
-include::example$whalesay-job.yaml[]
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: whale-say-job #<.>
+spec:
+  template:
+    spec:
+      containers:
+      - name: whale-say-container
+        image: docker/whalesay
+        command: ["cowsay","Hello DevNation"]
+      restartPolicy: Never
 ----
-<.> The name of the job will be used as the value of a label `job-name` on any pods that are spawned by this job definition.
+<.> 작업 이름은 이 작업 정의에 의해 생성된 모든 Pod에서 'job-name' 라벨 값으로 사용됩니다.
 
-[tabs]
-====
-Terminal 1::
-+
---
+
+
+== Terminal#1 에서 실행
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/whalesay-job.yaml
+cat <<EOF | oc create -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: whale-say-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: whale-say-container
+        image: docker/whalesay
+        command: ["cowsay","Hello DevNation"]
+      restartPolicy: Never
+EOF
 ----
---
-====
 
-This should yield the following output (in successive refreshes) in *{watch-terminal}*
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+Terminal#2에 다음과 같은 출력이 생성됩니다(연속 새로 고침).
+
+
 [.console-output]
 [source,bash]
 ----
@@ -113,21 +179,17 @@ whale-say-job-m8vxt  1/1    Running    80s  devnation-m02
 NAME                 READY  STATUS     AGE  NODE
 whale-say-job-m8vxt  0/1    Completed  85s  devnation-m02
 ----
---
-====
 
 
-You can get `jobs` as any other Kubernetes resource:
 
-[tabs]
-====
-Terminal 1::
-+
---
+다른 Kubernetes 리소스처럼 `Job` 리소스를 확인하실 수 있습니다.
+
+== Terminal#1에서 작업
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get jobs
+oc get jobs
 ----
 
 [.console-output]
@@ -136,20 +198,20 @@ kubectl get jobs
 NAME            COMPLETIONS   DURATION   AGE
 whale-say-job   1/1           20s        36s
 ----
---
-====
 
-Since the job is run by a pod, to get the output of the `job` execution, we need only to get the output of the pod's logs:
+
+Job은 Pod에 의해 실행되므로 `job` 실행의 출력을 얻으려면 Pod 로그의 출력만 얻으면 됩니다.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl logs \
+oc logs \
   -l job-name=whale-say-job \#<.>
   --tail=-1 #<.>
 ----
-<.> This is allowing us to look for any pod labeled with `job-name` (see above) set to `whale-say-job`
-<.> `--tail` tells the log command how many lines from the end of the (pod's) log to return.  So that we can see all the whimsy in this job pod's message, we set this to `-1` to see all the linesfootnote:[Normally --tail is set to -1 by default, but that's only when requesting logs from a _single specific resource_.  When there is the potential to return multiple resources' logs (as is the case here when we're asking for logs by label) the number of lines returned from each resource's logs are limited to 10 by default]
+<.> 이를 통해 `whale-say-job`으로 설정된 `job-name`(위 참조) 라벨이 붙은 모든 포드를 찾을 수 있습니다.
+<.> `--tail` 옵션은 로그 명령어에 (Pod의) 로그에서 끝에서부터 몇 줄을 반환할지 지정합니다. 이 작업용 Pod의 메시지에서 모든 재미난 내용을 확인할 수 있도록, -1로 설정하여 모든 줄을 반환하도록 했습니다. +
+주의할 점은 [일반적으로 --tail 옵션은 기본값으로 -1로 설정되어 있지만, 이는 _단일 특정 리소스_의 로그를 요청할 때만 해당됩니다. 라벨을 사용하여 로그를 요청할 경우처럼 여러 리소스의 로그를 반환할 가능성이 있는 상황에서는 각 리소스의 로그에서 반환되는 줄 수가 기본값으로 10줄로 제한됩니다.]
 
 [.console-output]
 [source,bash]
@@ -170,20 +232,20 @@ kubectl logs \
           \____\______/
 ----
 
+
 === Clean Up
 
-[tabs]
-====
-Terminal 1::
-+
---
+
+== Terminal#1에서 작업
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete -f apps/kubefiles/whalesay-job.yaml
+oc delete -f job whalesay-job
 ----
---
-====
+
+
+
 
 
 == CronJobs
