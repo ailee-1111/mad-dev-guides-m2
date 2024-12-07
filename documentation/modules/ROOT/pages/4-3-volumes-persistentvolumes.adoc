@@ -1,15 +1,11 @@
 = Volumes & Persistent Volumes
-include::_attributes.adoc[]
-:watch-terminal: Terminal 2
-:file-watch-terminal: Terminal 3
 
-Containers are ephemeral by definition, which means that anything that it is stored at running time is lost when the container is stopped.
-This might cause problems with containers that need to persist their data, like database containers.
+컨테이너는 정의상 임시적입니다. 즉, 실행 시 저장된 모든 내용은 컨테이너가 중지되면 손실됩니다. 이로 인해 데이터베이스 컨테이너와 같이 데이터를 유지해야 하는 컨테이너에 문제가 발생할 수 있습니다.
 
-A Kubernetes volume is just a directory that is accessible to the Containers in a Pod. 
-The concept is similar to Docker volumes, but in Docker you are mapping the container to a computer host, whereas in the case of Kubernetes volumes, the medium that backs it and the contents of it are determined by the particular volume type used.
+Kubernetes 볼륨은 Pod의 컨테이너에 액세스할 수 있는 디렉터리일 뿐입니다. +
+개념은 Docker 볼륨과 유사하지만 Docker에서는 컨테이너를 컴퓨터 호스트에 매핑하는 반면, Kubernetes 볼륨의 경우 이를 뒷받침하는 매체와 콘텐츠는 사용된 특정 볼륨 유형에 따라 결정됩니다.
 
-Some of the volume types are:
+일부 볼륨 유형은 다음과 같습니다.
 
 * awsElasticBlockStore
 * azureDisk
@@ -23,87 +19,165 @@ Some of the volume types are:
 
 === Namespace
 
-:section-k8s: volumes
-:set-namespace: myspace
+네임스페이스를 생성 후, 올바른 네임스페이스에 있는지 확인하세요.
 
-Make sure the proper namespace `{set-namespace}` is created and context is set to point to it.
 
-include::partial$namespace-setup-tip.adoc[]
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc new-project volume-%userid%
+----
 
-include::partial$set-context.adoc[]
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+namespace/volume-%userid% created
+----
+
+NOTE: `oc new-project volume-%userid%` : volume-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project volume-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "volume-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project volume-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 volume-%userid%로 변경합니다.
+
+
+
+네임스페이스에서 아무것도 실행되고 있지 않은지 확인하세요.
+
+[#no-resources-resource]
+[.console-input]
+[source, bash]
+----
+oc get all
+----
+
+[.console-output]
+[source,bash]
+----
+No resources found in myspace namespace.
+----
+
+
+
 
 === Watch
 
-If it's not open already, you'll want to have a terminal open (call it *{watch-terminal}*) to watch what's going on with the pods in our current namespace
+=== Terminal#2에서 작업
 
-:section-k8s: volumes
-include::partial$watching-pods-with-nodes.adoc[]
-
-== Volumes
-
-Let's start with two examples of `Volumes`.
-
-=== EmptyDir
-
-An `emptyDir` volume is first created when a Pod is assigned to a node and exists as long as that Pod is running on that node.
-As the name says, it is initially empty.
-All Containers in the same Pod can read and write in the same `emptyDir` volume.
-When a Pod is restarted or removed, the data in the `emptyDir` is lost forever.
-
-:quick-open-file: myboot-pod-volume.yml
-
-Let's deploy a service that exposes two endpoints, one to write content to a file and another one to retrieve the content from that file.  Open `{quick-open-file}`
-
-include::partial$tip_vscode_quick_open.adoc[]
-
-[source, yaml]
-.{quick-open-file}
-----
-include::example$myboot-pod-volume.yml[]
-----
-<.> Notice that this is a `Pod` and not a `Deployment`
-<.> This is where this mount point will appear in the pod.  See below 
-<.> This must match the name of a volume that we define, in this case it is defined right at the bottom of the file
-
-In `volumes` section, you are defining the volume, and in `volumeMounts` section, how the volume is mounted inside the container.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-volume.yml
+watch -n 1 "oc get pods -o wide \
+  | awk '{print \$1 \" \" \$2 \" \" \$3 \" \" \$5 \" \" \$7}' | column -t"
 ----
 
-Then in our watch window we should see something like
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+TIP: `-o wide` 옵션을 사용하면 포드가 예약된 노드를 볼 수 있습니다. +
+줄이 너무 길어지는 것을 방지하기 위해 `awk`와 `column`을 사용하여 원하는 열만 가져오고 형식을 지정합니다.
+
+
+
+
+
+== Volumes
+
+'Volumes'의 두 가지 예부터 시작해 보겠습니다.
+
+
+=== EmptyDir
+
+'emptyDir' 볼륨은 Pod가 노드에 할당될 때 처음 생성되고 해당 Pod가 해당 노드에서 실행되는 동안 존재합니다. 이름에서 알 수 있듯이 처음에는 비어 있습니다. 동일한 Pod에 있는 모든 컨테이너는 읽고 쓸 수 있습니다.  동일한 `emptyDir` 볼륨. Pod가 다시 시작되거나 제거되면 `emptyDir`의 데이터가 영원히 손실됩니다.
+
+
+두 개의 엔드포인트(파일에 콘텐츠를 쓰는 엔드포인트와 해당 파일에서 콘텐츠를 검색하는 엔드포인트)를 노출하는 서비스를 배포해 보겠습니다. 
+
+[source, yaml]
+----
+apiVersion: v1
+kind: Pod #<.>
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo
+    image: quay.io/rhdevelopers/myboot:v4
+    
+    volumeMounts:
+    - mountPath: /tmp/demo #<.>
+      name: demo-volume #<.> 
+
+  volumes:
+  - name: demo-volume
+    emptyDir: {}
+----
+
+NOTE:
+<.> 이는 '배포'가 아닌 '포드'입니다.
+<.> 이 마운트 지점이 포드에 표시되는 위치입니다.  아래를 참조하세요 
+<.> 이는 우리가 정의한 볼륨의 이름과 일치해야 합니다. 이 경우 파일 하단에 바로 정의됩니다.
+
+`volumes` 섹션에서는 볼륨을 정의하고, `volumeMounts` 섹션에서는 볼륨이 컨테이너 내부에 마운트되는 방법을 정의합니다.
+
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Pod #<.>
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo
+    image: quay.io/rhdevelopers/myboot:v4
+    
+    volumeMounts:
+    - mountPath: /tmp/demo #<.>
+      name: demo-volume #<.> 
+
+  volumes:
+  - name: demo-volume
+    emptyDir: {}
+EOF
+----
+
+
+그런 다음 Watch 창에서 다음과 같은 내용을 볼 수 있습니다.
+
+== Terminal#2에서 확인
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
 NAME         READY  STATUS             AGE  NODE
 myboot-demo  0/1    ContainerCreating  9s   devnation
 ----
---
-====
 
-Once the pod is running, let's exec into the container:
+
+Pod가 실행되면 컨테이너에 실행해 보겠습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl exec -ti myboot-demo -- /bin/bash
+oc exec -ti myboot-demo -- /bin/bash
 ----
 
-And once `exec` 'd into the container, run the following commands: 
+그리고 컨테이너에 'exec'가 들어가면 다음 명령을 실행합니다.
 
-[tabs]
-====
-Container::
-+
---
 [.console-input]
 [source,bash]
 ----
@@ -111,7 +185,9 @@ curl localhost:8080/appendgreetingfile
 curl localhost:8080/readgreetingfile
 ----
 
-Which should return
+NOTE: 해당 명령어는 Greetingfile에 특정 문구를 추가합니다.
+
+아래의 값이 반환됩니다.
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
@@ -119,7 +195,8 @@ Which should return
 Jambo
 ----
 
-In this case, the `emptyDir` was set to `/tmp/demo` so you can check the directory content by running `ls`:
+이 경우 `emptyDir`은 `/tmp/demo`로 설정되었으므로 `ls`를 실행하여 디렉터리 내용을 확인할 수 있습니다.
+
 
 [.console-input]
 [source,bash]
@@ -132,62 +209,68 @@ ls /tmp/demo
 ----
 greeting.txt
 ----
---
-====
+
 
 ==== EmptyDir Ephemerality
 
-If you haven't already, close the container's shell:
+아직 닫지 않았다면 컨테이너의 셸을 닫습니다.
 
-[tabs]
-====
-Container::
-+
---
+
 [.console-input]
 [source,bash]
 ----
 exit
 ----
---
-====
 
-And delete the pod:
+
+그리고 포드를 삭제합니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl delete pod myboot-demo
+oc delete pod myboot-demo
 ----
 
 [IMPORTANT]
 ====
-You need to wait until the pod is completely deleted before trying to deploy it again
+Pod를 다시 배포하기 전에 Pod가 완전히 삭제될 때까지 기다려야 합니다.
 ====
 
-Then if you deploy the same service again: 
+그런 다음 동일한 서비스를 다시 배포하는 경우:
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-volume.yml
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Pod #<.>
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo
+    image: quay.io/rhdevelopers/myboot:v4
+    
+    volumeMounts:
+    - mountPath: /tmp/demo #<.>
+      name: demo-volume #<.> 
+
+  volumes:
+  - name: demo-volume
+    emptyDir: {}
+EOF
 ----
 
-And once in the `Running` state `exec` into the pod: 
+그리고 `실행 중` 상태에서 포드에 `exec`를 입력하면 다음과 같습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl exec -ti myboot-demo -- /bin/bash
+oc exec -ti myboot-demo -- /bin/bash
 ----
 
-[tabs]
-====
-Container::
-+
---
 
-Let's list the contents of our mount point in our new pod
+새 포드에 마운트 지점의 내용을 나열해 보겠습니다.
 
 [.console-input]
 [source,bash]
@@ -195,7 +278,7 @@ Let's list the contents of our mount point in our new pod
 ls /tmp/demo
 ----
 
-You'll notice that the directory content is empty, meaning that the file we created with the last pod was destroyed when the pod was deleted
+디렉터리 콘텐츠가 비어 있음을 알 수 있습니다. 이는 마지막 포드로 생성한 파일이 포드가 삭제될 때 삭제되었음을 의미합니다.
 
 [.console-output]
 [source,bash]
@@ -203,7 +286,7 @@ You'll notice that the directory content is empty, meaning that the file we crea
 root@myboot-demo:/app# 
 ----
 
-Exit the pod
+포드의 명령어창을 종료합니다.
 
 [.console-input]
 [source,bash]
@@ -211,53 +294,98 @@ Exit the pod
 exit
 ----
 
---
-====
-
-Now delete the pod.
+이제 포드를 삭제하세요.
 
 [.console-input]
 [source,bash]
 ----
-kubectl delete pod myboot-demo
+oc delete pod myboot-demo
 ----
+
 
 ==== EmptyDir Sharing in Pod
 
-`emptyDir` is shared between containers of the same Pod.  Let's take a look at a deployment that creates two containers in the same pod that mount the same `emptyDir` volume.
+`emptyDir`은 동일한 Pod의 컨테이너 간에 공유됩니다.  동일한 'emptyDir' 볼륨을 마운트하는 동일한 Pod에 두 개의 컨테이너를 생성하는 배포를 살펴보겠습니다.
 
-:quick-open-file: myboot-pods-volume.yml
-include::partial$tip_vscode_quick_open.adoc[]
-
-Consider `{quick-open-file}`: 
 
 [.console-output]
 [source,yaml]
 .{quick-open-file}
 ----
-include::example$myboot-pods-volume.yml[]
-----
-<.> The first container in the pod is called myboot-demo-1 and mounts `demo-volume` at `/tmp/demo`
-<.> The second container in the pod is called `myboot-demo-2` and mounts `demo-volume` at the same `/tmp/demo` point
-<.> Both containers use the same exact image
-<.> Notice that the second container needs to listen on a different port from the first since the containers share ports on the pod.  The `env` directive at this level only applies to the `myboot-demo-2` container
-<.> The volume is defined only once but referenced by each container in the pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo-1 #<.>
+    image: quay.io/rhdevelopers/myboot:v4
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
 
-Now let's create that deployment in the `{set-namespace}` namespace
+  - name: myboot-demo-2 #<.>
+    image: quay.io/rhdevelopers/myboot:v4 #<.>
+
+    env:
+    - name: SERVER_PORT #<.>
+      value: "8090"
+
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
+
+  volumes:
+  - name: demo-volume #<.>
+    emptyDir: {}
+----
+NOTE: 
+<.> 포드의 첫 번째 컨테이너는 myboot-demo-1이라고 하며 `/tmp/demo`에 `demo-volume`을 마운트합니다.
+<.> 포드의 두 번째 컨테이너는 `myboot-demo-2`라고 하며 동일한 `/tmp/demo` 지점에 `demo-volume`을 마운트합니다.
+<.> 두 컨테이너 모두 동일한 이미지를 사용합니다.
+<.> 컨테이너는 포드의 포트를 공유하므로 두 번째 컨테이너는 첫 번째 컨테이너와 다른 포트에서 수신 대기해야 합니다.  이 수준의 `env` 지시문은 `myboot-demo-2` 컨테이너에만 적용됩니다.
+<.> 볼륨은 한 번만 정의되지만 포드의 각 컨테이너에서 참조됩니다.
+
+이제 네임스페이스에 해당 배포를 생성해 보겠습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl apply -f apps/kubefiles/myboot-pods-volume.yml
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo-1
+    image: quay.io/rhdevelopers/myboot:v4
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
+
+  - name: myboot-demo-2
+    image: quay.io/rhdevelopers/myboot:v4
+
+    env:
+    - name: SERVER_PORT
+      value: "8090"
+
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
+
+  volumes:
+  - name: demo-volume
+    emptyDir: {}
+EOF
+
+
 ----
 
-And in our pod watch we should see
+그리고 우리 Pod Watch에서 우리는
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+== Terminal#2에서 확인
 [.console-output]
 [source,bash,subs="+macros,+attributes,+quotes"]
 ----
@@ -265,27 +393,18 @@ NAME          READY   STATUS    RESTARTS   AGE
 myboot-demo   #2/2#    Running   0          4s
 ----
 
-Notice the `2/2` ready status.  This represents the 2 containers in the pod definition
---
-====
+'2/2' 준비 상태를 확인하세요.  이는 포드 정의에 있는 2개의 컨테이너를 나타냅니다.
 
-First, let's exec into the *second* container in the pod and start a watch on the mount point.  For this we'll open yet another terminal (*{file-watch-terminal}*) `exec` into the other container in the pod to run the `cat` command
 
-[tabs]
-====
-{file-watch-terminal}::
-+
---
-
-include::partial$open-terminal-in-editor-inset.adoc[]
+먼저 포드의 *두 번째* 컨테이너로 실행하고 마운트 지점에서 감시를 시작하겠습니다.  이를 위해 포드의 다른 컨테이너에 또 다른 터미널(*{file-watch-terminal}*) `exec`를 열어 `cat` 명령을 실행합니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl exec -it myboot-demo -c myboot-demo-2 -- bash 
+oc exec -it myboot-demo -c myboot-demo-2 -- bash 
 ----
 
-And then from inside the `myboot-demo-2` container in the pod, run the following command: 
+그런 다음 포드의 `myboot-demo-2` 컨테이너 내부에서 다음 명령을 실행합니다.
 
 [.console-input]
 [source,bash]
@@ -293,7 +412,7 @@ And then from inside the `myboot-demo-2` container in the pod, run the following
 watch -n1 -- "ls -l /tmp/demo && eval ""cat /tmp/demo/greeting.txt"""
 ----
 
-Which will at first return
+처음에는 아래와 같이 반환됩니다
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
@@ -302,23 +421,33 @@ total 0
 cat: /tmp/demo/greeting.txt: No such file or directory
 ----
 
---
-====
+ *첫 번째* 컨테이너에 액세스하여 *두 번째* 컨테이너가 볼 수 있는 파일을 생성할 수 있는지 살펴보겠습니다.
 
-Let's access into the *first* container in the main terminal and see if we can get it to create a file that the *second* container can see
+== Terminal#3에서 작업
 
-[tabs]
-====
-Terminal 1::
-+
---
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project volume-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "volume-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project volume-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 volume-%userid%로 변경합니다.
+
+
 [.console-input]
 [source,bash]
 ----
-kubectl exec -ti myboot-demo -c myboot-demo-1 -- /bin/bash
+oc exec -ti myboot-demo -c myboot-demo-1 -- /bin/bash
 ----
 
-and generate some content to `/tmp/demo` directory.
+그리고 `/tmp/demo` 디렉토리에 일부 콘텐츠를 생성합니다.
 
 [.console-input]
 [source,bash]
@@ -326,7 +455,7 @@ and generate some content to `/tmp/demo` directory.
 curl localhost:8080/appendgreetingfile
 ----
 
-And then show that the file exists and what its content is: 
+그런 다음 파일이 존재하고 해당 내용이 무엇인지 표시합니다.
 
 [.console-input]
 [source,bash]
@@ -342,16 +471,11 @@ total 4
 Jambo
 ----
 
---
-====
 
-Meanwhile in *{file-watch-terminal}* you should see something like: 
 
-[tabs]
-====
-{file-watch-terminal}::
-+
---
+한편 Terminal#1에는 다음과 같은 내용이 표시됩니다.
+
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -360,7 +484,7 @@ total 4
 Jambo
 ----
 
-Hit kbd:[CTRL+c] to exit the watch and then exit out of the `exec` to the pod
+[CTRL+c]를 눌러 Watch를 종료한 다음 'exec'에서 포드로 종료합니다.
 
 [.console-input]
 [source,bash]
@@ -368,12 +492,12 @@ Hit kbd:[CTRL+c] to exit the watch and then exit out of the `exec` to the pod
 exit
 ----
 
-Now, back in your terminal you can get the volume information from a Pod by running:
+이제 터미널로 돌아가서 다음을 실행하여 Pod에서 볼륨 정보를 가져올 수 있습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl describe pod myboot-demo
+oc describe pod myboot-demo
 ----
 
 [.console-output]
@@ -386,43 +510,109 @@ Volumes:
     SizeLimit:  <unset>
 ----
 
---
-====
 
 ==== Clean Up
 
-include::partial$terminal-cleanup.adoc[tags=**;!*;term3;term-exec]
+
+
+`exec` 명령을 종료하세요.
+
+[.console-input]
+[source,bash]
+----
+exit
+----
+
+
+이제 포드를 삭제하세요.
+
+[.console-input]
+[source,bash]
+----
+oc delete pod myboot-demo
+----
+
+
+
+
+
+
 
 === HostPath
 
-:quick-open-file: myboot-pod-volume-hostpath.yml
 
-A `hostPath` volume mounts a file or directory from the node's filesystem into the Pod.  Take a look at `{quick-open-file}`
+IMPORTANT: 
+*hostPath 볼륨 사용 제한* +
+OpenShift는 클러스터 노드의 파일 시스템 경로를 컨테이너에 직접 마운트하는 hostPath 볼륨의 사용을 기본적으로 금지합니다. 이는 보안상 중요한 이유 때문입니다.+
 
-include::partial$tip_vscode_quick_open.adoc[]
+*SCC(Secure Context Constraints)* +
+OpenShift는 Pod가 특정 보안 컨텍스트 제약 조건(SCC)에 맞아야 실행을 허용합니다. +
+기본적으로 사용자는 restricted SCC가 할당되어 있고, 이는 hostPath 볼륨 사용을 허용하지 않습니다.+
+
+*이 실습의 user계정은 admin 권한이 없기 때문에, `HostPath` 부분은 실습하지 않고 검토만 하는 것을 권장합니다.*
+
+
+
+`hostPath` 볼륨은 노드 파일 시스템의 파일이나 디렉터리를 포드에 마운트합니다. 
+
 
 [source, yaml]
-.{quick-open-file}
 ----
-include::example$myboot-pod-volume-hostpath.yaml[]
-----
-<.> We're mounting the same location as before, but you can see that we define the volume as `hostPath` here instead of `emptyDir`
-<.> `/mnt/data` is a location on the kubernetes `node` to which this pod gets assigned
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo
+    image: quay.io/rhdevelopers/myboot:v4
+    
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
 
-In this case, you are defining the host/node directory where the contents are going to be stored.
+  volumes:
+  - name: demo-volume
+    hostPath: #<.> 
+      path: "/mnt/data" #<.>
+----
+NOTE: 
+<.> 이전과 동일한 위치에 마운트하고 있지만 여기에서는 `emptyDir` 대신 `hostPath`로 볼륨을 정의한 것을 볼 수 있습니다.
+<.> `/mnt/data`는 이 Pod가 할당되는 kubernetes `node`의 위치입니다.
+
+이 경우 내용이 저장될 호스트/노드 디렉터리를 정의합니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-volume-hostpath.yaml
+cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myboot-demo
+spec:
+  containers:
+  - name: myboot-demo
+    image: quay.io/rhdevelopers/myboot:v4
+    
+    volumeMounts:
+    - mountPath: /tmp/demo
+      name: demo-volume
+
+  volumes:
+  - name: demo-volume
+    hostPath:
+      path: "/mnt/data"
+EOF
 ----
 
-Now, if you describe the Pod, in volumes section, you'll see:
+이제 볼륨 섹션에서 포드를 설명하면 다음이 표시됩니다.
+
 
 [.console-input]
 [source,bash]
 ----
-kubectl describe pod myboot-demo
+oc describe pod myboot-demo
 ----
 
 [.console-output]
@@ -436,40 +626,95 @@ Volumes:
 ----
 
 
-[tabs]
-====
-{file-watch-terminal}::
-+
---
-Let's open a terminal where we can watch the directory on the 'host' or the 'node'
+'호스트' 또는 '노드'의 디렉터리를 볼 수 있는 터미널을 열어 보겠습니다.
 
-include::partial$open-terminal-in-editor-inset.adoc[]
+우선 pod가 배포되어 있는 노드를 확인합니다.
 
 
-:mount-dir: /mnt/data
-include::partial$watch-node-directory.adoc[]
+[.console-input]
+[source,bash]
+----
+oc get pod -o wide
+----
 
---
-====
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+NAME          READY   STATUS    RESTARTS   AGE     IP            NODE                                       NOMINATED NODE   READINESS GATES
+myboot-demo   1/1     Running   0          4m19s   10.131.0.29   ip-10-0-27-23.us-east-2.compute.internal   <none>           <none>
+----
 
-[tabs]
-====
-Terminal 1::
-+
---
+노드로 ssh 접속합니다.
 
-include::partial$create-greeting-file.adoc[]
+[.console-input]
+[source,bash]
+----
+oc debug node/ip-10-0-27-23.us-east-2.compute.internal
+chroot /host
+---
 
---
-====
+NOTE: oc debug node 명령어는 node를 디버깅하기 위한 pod를 생성하고 노드에 접속합니다.
 
-Meanwhile in the other terminal (*{file-watch-terminal}*) you should at the same time see the watch output change
 
-[tabs]
-====
-{file-watch-terminal}::
-+
---
+이제 노드에 있으므로 Pod가 `/tmp/demo`로 마운트한 `{mount-dir}` 디렉터리를 살펴보겠습니다.
+
+[.console-input]
+[source,bash]
+----
+watch -n1 -- "ls -al /mnt/data && eval ""cat /mnt/data/greeting.txt"""
+----
+
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+drwxr-xr-x. 2 root root  6 Dec  7 09:32 .
+drwxr-xr-x. 3 root root 18 Dec  7 09:32 ..
+cat: /mnt/data/greeting.txt: No such file or directory
+----
+
+NOTE: 아직 파일이 확인되지 않습니다.
+
+
+
+== Terminal#3에서 파일을 생성해 보겠습니다.
+
+
+[#kubectl-deploy-app]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc project volume-%userid%
+----
+
+[.console-output]
+[source,bash,subs="+macros,+attributes"]
+----
+Now using project "volume-%userid%" on server "https://172.30.0.1:443".
+----
+
+NOTE: `oc project volume-%userid%` : 현재 활성화된 컨텍스트의 기본 네임스페이스를 volume-%userid%로 변경합니다.
+
+
+
+[.console-input]
+[source,bash]
+----
+kubectl exec -ti myboot-demo -- /bin/bash
+----
+
+and then from within the pod, generate some content to `/tmp/demo` directory.
+
+[.console-input]
+[source,bash]
+----
+curl localhost:8080/appendgreetingfile
+----
+
+
+한편 다른 터미널(*{file-watch-terminal}*)에서는 동시에 watch 출력 변경을 볼 수 있습니다.
+
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -484,11 +729,9 @@ Jambo
 --
 ====
 
-Notice that now the content stored in `/tmp/demo` inside the Pod is stored at host path `/mnt/data`, so if the Pod dies, the content is not lost.
-
-But this might not solve all the problems as if the Pod goes down and it is rescheduled in another node, then the data will not be in this other node.
-
-Let's see another example, in this case for an Amazon EBS Volume:
+이제 Pod 내부 `/tmp/demo`에 저장된 콘텐츠는 호스트 경로 `/mnt/data`에 저장되므로 Pod가 죽어도 콘텐츠가 손실되지 않습니다. +
+하지만 이렇게 해도 모든 문제가 해결되지는 않을 수 있습니다.  +
+포드가 다운되고 다른 노드에서 다시 예약되면 데이터는 이 다른 노드에 없게 됩니다. 이 경우 Amazon EBS 볼륨에 대한 또 다른 예를 살펴보겠습니다. 
 
 [source, yaml]
 ----
@@ -505,29 +748,36 @@ spec:
         fsType: ext4
 ----
 
-What we want you to notice from the previous snippet is that you are mixing things from your application (ie the container, probes, ports, ...) things that are more in the _dev_ side with things more related to the cloud (ie physical storage), which falls more in the _ops_ side.
-
-To avoid this mix of concepts, Kubernetes offers some layer of abstractions, so developers just ask for space to store data (_persistent volume claim_), and the operations team offers the physical storage configuration.
+이전 스니펫에서 알아두셔야 할 점은 애플리케이션(예: 컨테이너, 프로브, 포트 등)의 항목과 _dev_ 측면에 더 많은 항목을 클라우드와 더 관련된 항목(예: 물리적)을 혼합하고 있다는 것입니다. +
+이러한 개념의 혼합을 피하기 위해 Kubernetes는 일부 추상화 계층을 제공하므로 개발자는 데이터를 저장할 공간(_지속적 볼륨 요청_)만 요청하면 운영 팀은 물리적 스토리지 구성을 제공합니다.
 
 ==== Clean Up
 
-include::partial$terminal-cleanup.adoc[tags=**;!*;term-exec]
+
+[.console-input]
+[source,bash]
+----
+oc delete pod myboot-demo 
+---
+
+
+
+
 
 == Persistent Volume & Persistent Volume Claim
 
-A `PersistentVolume` (_PV_) is a Kubernetes resource that is created by an administrator or dynamically using `Storage Classes` independently from the Pod.
-It captures the details of the implementation of the storage and can be NFS, Ceph, iSCSI, or a cloud-provider-specific storage system.
+'영구 볼륨'(_PV_)은 관리자가 생성하거나 포드와 독립적으로 '스토리지 클래스'를 동적으로 사용하여 생성되는 Kubernetes 리소스입니다.
+이는 스토리지 구현에 대한 세부 정보를 캡처하며 NFS, Ceph, iSCSI 또는 클라우드 제공업체별 스토리지 시스템일 수 있습니다.
 
-A `PersistentVolumeClaim` (_PVC_) is a request for storage by a user. 
-It can request for a specific volume size or, for example, the access mode.
+'PertantVolumeClaim'(_PVC_)은 사용자의 스토리지 요청입니다.
+특정 볼륨 크기 또는 액세스 모드 등을 요청할 수 있습니다.
+
 
 === Persistent volume/claim with hostPath
 
-:quick-open-file: demo-persistent-volume-hostpath.yaml
 
-Let's use `hostPath` strategy, but not configuring it directly as volume, but using persistent volume and persistent volume claim. Check out `{quick-open-file}`:
+`hostPath` 전략을 사용하되 이를 볼륨으로 직접 구성하지 않고 영구 볼륨 및 영구 볼륨 클레임을 사용하겠습니다. 
 
-include::partial$tip_vscode_quick_open.adoc[]
 
 [source, yaml]
 .{quick-open-file}
@@ -548,15 +798,36 @@ spec:
     path: "/mnt/persistent-volume"
 ----
 
-Now, the `volume` information is not in the pod anymore but in the _persistent volume_ object.
+이제 '볼륨' 정보는 더 이상 포드에 있지 않고 _영구 볼륨_ 개체에 있습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl apply -f apps/kubefiles/demo-persistent-volume-hostpath.yaml 
-
-kubectl get pv -w
+cat <<EOF | oc create -f -
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: my-persistent-volume
+  labels:
+    type: local
+spec:
+  storageClassName: pv-demo 
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/persistent-volume"
+EOF
 ----
+
+[.console-input]
+[source,bash]
+----
+oc get pv -w
+----
+
+
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
@@ -564,6 +835,7 @@ kubectl get pv -w
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                                           STORAGECLASS   REASON   AGE
 my-persistent-volume                       100Mi      RWO            Retain           Available                                                   pv-demo                 5s
 ----
+
 
 :mount-dir: /mnt/persistent-volume
 
