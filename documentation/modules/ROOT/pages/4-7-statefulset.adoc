@@ -34,7 +34,7 @@ oc new-project sf-%userid%
 namespace/sf-%userid% created
 ----
 
-NOTE: `oc new-project ev-%userid%` : sf-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
+NOTE: `oc new-project sf-%userid%` : sf-%userid%라는 새 프로젝트(네임스페이스)를 생성합니다.
 
 [#kubectl-deploy-app]
 [.console-input]
