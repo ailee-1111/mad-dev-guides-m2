@@ -11,12 +11,13 @@ Kubernetes cron 작업을 사용하여 일반 클러스터 및 애플리케이�
 표준 Kubernetes Job 및 CronJob을 사용하여 OpenShift에서 작업을 자동화할 수 있습니다. 자동화된 작업은 한 번 또는 정기적으로 실행되도록 구성할 수 있습니다.
 
 * *Jobs*
-Kubernetes 작업에서 한 번 실행되는 작업을 지정합니다.
-https://kubernetes.io/docs/concepts/workloads/controllers/job/[Kuernetes 문서:Jobs]
+Kubernetes 작업에서 한 번 실행되는 작업을 지정합니다. +
+https://kubernetes.io/docs/concepts/workloads/controllers/job/[Kuernetes 문서:Jobs] 에서 자세한 내용을 확인하실 수 있습니다.
 
 
 * *CronJobs*
-Kubernetes cron 작업에는 정기적으로 작업을 실행하는 일정이 있습니다.
+Kubernetes cron 작업에는 정기적으로 작업을 실행하는 일정이 있습니다. +
+https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/[Kuernetes 문서:Cron-Jobs] 에서 자세한 내용을 확인하실 수 있습니다.
 
 cron 작업 실행이 완료되면 Kubernetes는 작업 리소스를 생성합니다. Kubernetes는 cron 작업 정의에 있는 템플릿에서 이러한 작업을 생성합니다. 이러한 관계 외에 Kubernetes 작업 및 cron 작업은 배포 또는 데몬 집합과 같은 워크로드 리소스 유형입니다.
 
