@@ -228,7 +228,7 @@ metadata:
   namespace: myspace-%userid%
 spec:
   rules:
-    - host: stuff-myspace-%userid%.apps.cluster-fs55g.fs55g.sandbox3296.opentlc.com
+    - host: stuff-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
       http:
         paths:
           - path: /
@@ -246,7 +246,7 @@ EOF
 [.console-input]
 [source, bash]
 ----
-curl stuff-myspace-%userid%.apps.cluster-fs55g.fs55g.sandbox3296.opentlc.com
+curl stuff-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
 ----
 
 [.console-output]
@@ -297,7 +297,7 @@ oc get routes
 [source,bash]
 ----
 NAME          HOST/PORT                                     PATH   SERVICES      PORT   TERMINATION   WILDCARD
-the-service   the-service-myspace-%userid%.apps.cluster-fs55g.fs55g.sandbox3296.opentlc.com          the-service   8080                 None
+the-service   the-service-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com          the-service   8080                 None
 ----
 
 그런 다음 서비스에 요청하십시오.:
@@ -306,7 +306,7 @@ the-service   the-service-myspace-%userid%.apps.cluster-fs55g.fs55g.sandbox3296.
 [.console-input]
 [source, bash]
 ----
-curl the-service-myspace-%userid%.apps.cluster-fs55g.fs55g.sandbox3296.opentlc.com
+curl the-service-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
 ----
 
 
