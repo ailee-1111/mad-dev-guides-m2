@@ -18,10 +18,10 @@
 
 * 4. Kubernetes#3
 ** xref:4-1-secrets.adoc[Secrets]
-** xref:4-2-crds.adoc[Operators]
-** xref:4-3-volumes-persistentvolumes.adoc[Volumes]
-** xref:4-4-taints-affinity.adoc[Taints & Affinity]
 ** xref:4-5-jobs-cronjobs.adoc[Jobs & CronJobs]
 ** xref:4-6-daemonset.adoc[DaemonSet]
 ** xref:4-7-statefulset.adoc[StatefulSet]
+** xref:4-2-crds.adoc[Operators]
+** xref:4-3-volumes-persistentvolumes.adoc[Volumes]
+** xref:4-4-taints-affinity.adoc[Taints & Affinity]
 
