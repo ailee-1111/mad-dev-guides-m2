@@ -297,7 +297,7 @@ oc get routes
 [source,bash]
 ----
 NAME          HOST/PORT                                     PATH   SERVICES      PORT   TERMINATION   WILDCARD
-the-service   the-service-myspace-%userid%.apps.gcp.burrsutter.dev          the-service   8080                 None
+the-service   the-service-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com          the-service   8080                 None
 ----
 
 그런 다음 서비스에 요청하십시오.:
@@ -306,7 +306,7 @@ the-service   the-service-myspace-%userid%.apps.gcp.burrsutter.dev          the-
 [.console-input]
 [source, bash]
 ----
-curl the-service-myspace-%userid%.apps.gcp.burrsutter.dev
+curl the-service-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
 ----
 
 
