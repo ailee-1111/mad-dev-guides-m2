@@ -1109,43 +1109,29 @@ kubectl delete -f apps/kubefiles/demo-persistent-volume-hostpath.yaml
 
 == Static vs Dynamic Provisioning
 
-Persistent Volumes can be provisioned dynamically or statically.
+영구 볼륨은 동적으로 또는 정적으로 프로비저닝될 수 있습니다.
 
-Static provisioning allows cluster administrators to make *existing* storage device available to a cluster.
-When it is done in this way, the PV and the PVC must be provided manually.
+정적 프로비저닝을 통해 클러스터 관리자는 *기존* 저장 장치를 클러스터에서 사용할 수 있도록 할 수 있습니다.
+이런 방식으로 완료되면 PV와 PVC를 수동으로 제공해야 합니다.
 
-So far, in the last example, you've seen static provisioning.
+지금까지 마지막 예에서는 정적 프로비저닝을 살펴보았습니다.
 
-The dynamic provisioning eliminates the need for cluster administrators to pre-provision storage. 
-Instead, it automatically provisions storage when it is requested by users.
-To make it run you need to provide a Storage Class object and a PVC referring to it.
-After the PVC is created, the storage device and the PV are automatically created for you.
-The main purpose of dynamic provisioning is to work with cloud provider solutions.
+동적 프로비저닝을 사용하면 클러스터 관리자가 스토리지를 사전 프로비저닝할 필요가 없습니다.
+대신 사용자가 요청할 때 자동으로 스토리지를 프로비저닝합니다.
+이를 실행하려면 스토리지 클래스 객체와 이를 참조하는 PVC를 제공해야 합니다.
+PVC가 생성되면 스토리지 디바이스와 PV가 자동으로 생성됩니다.
+동적 프로비저닝의 주요 목적은 클라우드 제공업체 솔루션과 협력하는 것입니다.
 
-Normally, the Kubernetes implementation offers a default Storage Class so anyone can get started quickly with dynamic provisioning.
-You can get information from the default Storage Class by running:
+일반적으로 Kubernetes 구현은 누구나 동적 프로비저닝을 빠르게 시작할 수 있도록 기본 스토리지 클래스를 제공합니다.
+다음을 실행하여 기본 스토리지 클래스에서 정보를 얻을 수 있습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl get sc
+oc get sc
 ----
 
-[tabs]
-====
-Minikube::
-+
---
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
-standard (default)   k8s.io/minikube-hostpath   Delete          Immediate           false                  47d
-----
---
-OpenShift::
-+
---
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -1153,12 +1139,10 @@ NAME            PROVISIONER             AGE
 gp2 (default)   kubernetes.io/aws-ebs   31h
 ----
 
-By default, when OpenShift is installed in a cloud provider, it automatically creates a Storage Class with the underlying persistent technology of the cloud.
-For example in the case of AWS, a default Storage Class is provided pointing out to AWS EBS.
---
-====
+기본적으로 OpenShift가 클라우드 공급자에 설치되면 클라우드의 기본 영구 기술을 사용하여 스토리지 클래스가 자동으로 생성됩니다. +
+예를 들어 AWS의 경우 AWS EBS를 가리키는 기본 스토리지 클래스가 제공됩니다.
 
-Then you can create a Persistent Volume Claim which will create a Persistent Volume automatically.  Use kbd:[CTRL+p] to open `demo-dynamic-persistent.yaml` quickly:
+그런 다음 영구 볼륨을 자동으로 생성하는 영구 볼륨 신청을 생성할 수 있습니다.  
 
 [source, yaml]
 ----
@@ -1174,7 +1158,10 @@ spec:
       storage: 10Mi
 ----
 
-Since we've not specified any _storage class_ but there is one defined as the default, the _PVC_ implicitly refers to that one.  (You might consider comparing this pod definition to `myboot-persistent-volume-claim.yaml`)
+_storage 클래스_를 지정하지 않았지만 기본값으로 정의된 클래스가 있으므로 _PVC_는 암시적으로 해당 클래스를 참조합니다. +
+(이 포드 정의를 `myboot-pertant-volume-claim.yaml`과 비교하는 것을 고려해 볼 수 있습니다)
+
+
 
 .Difference between static and dynamic PVC (with static PV)
 image::pv-static-vs-dynamic.png[]
@@ -1183,92 +1170,66 @@ image::pv-static-vs-dynamic.png[]
 [source,bash]
 ----
 kubectl apply -f apps/kubefiles/demo-dynamic-persistent.yaml
+----
 
+[.console-input]
+[source,bash]
+----
 kubectl get pvc
 ----
 
-[tabs]
-====
-Minikube::
-+
---
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-NAME                 STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-myboot-volumeclaim   Pending                                      standard       2s
-----
---
-OpenShift::
-+
---
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
 NAME                 STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 myboot-volumeclaim   Pending                                      gp2            46sç
 ----
---
-====
 
-Notice that the _PVC_ is in _Pending_ STATUS, because remember that we are creating dynamic storage and it means that while the _pod_ doesn't request the volume, the _PVC_ will remain in a pending state and the _PV_ will not be created.
+
+_PVC_는 _Pending_ 상태입니다. 동적 스토리지를 생성 중이라는 점과 _pod_가 볼륨을 요청하지 않는 동안 _PVC_는 보류 상태로 유지되고 _PV_는 생성되지 않음을 의미하기 때문입니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-volume-pvc.yaml
+oc apply -f apps/kubefiles/myboot-pod-volume-pvc.yaml
 ----
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+== Terminal#2에서 수행
+
+[.console-input]
+[source,bash]
+----
+oc get pods
+----
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
 NAME          READY   STATUS    RESTARTS   AGE
 myboot-demo   1/1     Running   0          2m36s
 ----
---
-====
 
-When the pod is in _Running_ status, then you can get _PVC_ and _PV_ parameters.
+Pod가 _Running_ 상태이면 _PVC_ 및 _PV_ 매개변수를 가져올 수 있습니다.
 
 [.console-input]
 [source,bash]
 ----
-kubectl get pvc
+oc get pvc
 ----
 
-[tabs]
-====
-Minikube::
-+
---
-[.console-output]
-[source,bash,subs="+macros,+attributes"]
-----
-NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-myboot-volumeclaim   Bound    pvc-170f2e9a-4afc-4869-bd19-f10c86bff34b   10Mi       RWO            standard       5s
-----
---
-OpenShift::
-+
---
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
 NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 myboot-volumeclaim   Bound    pvc-6de4f27e-bd40-4b58-bb46-91eb08ca5bd7   1Gi        RWO            gp2            116s
 ----
---
-====
 
 
-Notice that now the volume claim is  _Bound_ to a volume.
 
-Finally, you can check that the _PV_ has been created automatically:
+이제 볼륨 청구가 볼륨에 _Bound_되었습니다.
+
+마지막으로 _PV_가 자동으로 생성되었는지 확인할 수 있습니다.
 
 [.console-input]
 [source,bash]
@@ -1276,31 +1237,23 @@ Finally, you can check that the _PV_ has been created automatically:
 kubectl get pv
 ----
 
-[tabs]
-====
-Minikube::
-+
---
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                        STORAGECLASS   REASON   AGE
 pvc-170f2e9a-4afc-4869-bd19-f10c86bff34b   10Mi       RWO            Delete           Bound    myspace/myboot-volumeclaim   standard                56s
 ----
---
-OpenShift::
-+
---
+
+
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                        STORAGECLASS   REASON   AGE
 pvc-6de4f27e-bd40-4b58-bb46-91eb08ca5bd7   1Gi        RWO            Delete           Bound    default/myboot-volumeclaim   gp2                     77s
 ----
---
-====
 
-Notice that the _CLAIM_ field points to the _PVC_ responsible for the creation of the _PV_.
+
+_CLAIM_ 필드는 _PV_ 생성을 담당하는 _PVC_를 가리킵니다.
 
 === Clean Up
 
@@ -1311,10 +1264,10 @@ kubectl delete -f apps/kubefiles/myboot-pod-volume-pvc.yaml
 kubectl delete -f apps/kubefiles/demo-dynamic-persistent.yaml
 ----
 
-== Distributed Filesystems
+== 분산 파일 시스템
 
-It is important to notice that cloud-providers offer distributed storages so data is always available in all the nodes.
-As you've seen in the last example, this storage class guarantees that all nodes see the same disk content.
+클라우드 제공업체는 분산 스토리지를 제공하므로 모든 노드에서 데이터를 항상 사용할 수 있다는 점에 유의하는 것이 중요합니다.
+마지막 예에서 본 것처럼 이 스토리지 클래스는 모든 노드가 동일한 디스크 콘텐츠를 볼 수 있도록 보장합니다.
 
-For example, if you are using Kubernetes/OpenShift on-prem or if you don't want to relay to a vendor solution, there is also support for distributed filesystems in Kubernetes.
-If that's the case, we recommend you use NFS, https://www.gluster.org/[GlusterFS ] or https://ceph.io/[Ceph].
+예를 들어 온프레미스에서 Kubernetes/OpenShift를 사용 중이거나 공급업체 솔루션으로 릴레이하지 않으려는 경우 Kubernetes에서 분산 파일 시스템도 지원됩니다.
+그렇다면 NFS, https://www.gluster.org/[GlusterFS ] 또는 https://ceph.io/[Ceph]를 사용하는 것이 좋습니다.
