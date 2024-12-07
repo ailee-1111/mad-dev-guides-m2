@@ -79,17 +79,17 @@ No resources found in myspace namespace.
 
 
 ===Terminal#2에서 작업
---
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-watch -n 1 "oc get pods -o wide \#<.>
-  | awk '{print \$1 \" \" \$2 \" \" \$3 \" \" \$5 \" \" \$7}' | column -t" #<.>
+watch -n 1 "oc get pods -o wide \
+  | awk '{print \$1 \" \" \$2 \" \" \$3 \" \" \$5 \" \" \$7}' | column -t"
 ----
-<.> `-o wide` 옵션을 사용하면 포드가 예약된 노드를 볼 수 있습니다. +
-<.> 줄이 너무 길어지는 것을 방지하기 위해 `awk`와 `column`을 사용하여 원하는 열만 가져오고 형식을 지정합니다.
 
---
+
+TIP: `-o wide` 옵션을 사용하면 포드가 예약된 노드를 볼 수 있습니다. +
+줄이 너무 길어지는 것을 방지하기 위해 `awk`와 `column`을 사용하여 원하는 열만 가져오고 형식을 지정합니다.
 
 
 
@@ -127,7 +127,7 @@ metadata:
   labels:
     app: quarkus-statefulset
 spec:
-  serviceName: "quarkus" # <.>
+  serviceName: "quarkus" 
   replicas: 2
   selector:
     matchLabels:
@@ -145,7 +145,7 @@ spec:
           name: web
 ----
 
-<.> `serviceName`은 이 `StatefulSet`을 관리하는 (헤드리스) 서비스의 이름입니다.  이 서비스는 StatefulSet 이전에 존재해야 하며 세트의 네트워크 ID를 담당합니다.
+NOTE: `serviceName`은 이 `StatefulSet`을 관리하는 (헤드리스) 서비스의 이름입니다.  이 서비스는 StatefulSet 이전에 존재해야 하며 세트의 네트워크 ID를 담당합니다.
 
 [#hostname-formula]
 다음 "공식"을 사용하여 `StatefulSet`의 모든 구성원 Pod에 대한 호스트 이름을 예측할 수 있습니다.
@@ -168,19 +168,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: #quarkus# #<.>
+  name: #quarkus#
   labels:
     app: quarkus-statefulset
 spec:
   ports:
   - port: 8080
     name: web
-  clusterIP: None #<.>
+  clusterIP: None #
   selector:
     app: quarkus-statefulset
 ----
-<.> 이는 `StatefulSet`의 `serviceName` 필드와 일치합니다.  DNS 항목을 생성하려면 일치해야 합니다.
-<.> `clusterIP`를 `None`으로 설정하면 서비스가 "헤드리스"됩니다.
+
+NOTE: 
+name은  `StatefulSet`의 `serviceName` 필드와 일치합니다.  DNS 항목을 생성하려면 일치해야 합니다. +
+`clusterIP`를 `None`으로 설정하면 서비스가 "헤드리스"됩니다.
+
 
 다음 `.yaml`을 클러스터에 적용하여 `StatefulSet`과 위에서 살펴본 해당 헤드리스 서비스를 생성합니다.
 
@@ -188,7 +191,46 @@ spec:
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc apply -f apps/kubefiles/quarkus-statefulset.yaml
+cat <<EOF | oc apply -f -
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: quarkus-statefulset
+  labels:
+    app: quarkus-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: quarkus-statefulset
+  serviceName: "quarkus"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: quarkus-statefulset
+    spec:
+      containers:
+      - name: quarkus-statefulset
+        image: quay.io/rhdevelopers/quarkus-demo:v1
+        ports:
+        - containerPort: 8080
+          name: web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quarkus
+  labels:
+    app: quarkus-statefulset
+spec:
+  ports:
+  - port: 8080
+    name: web
+  clusterIP: None
+  selector:
+    app: quarkus-statefulset
+---
+EOF
 ----
 
 그러면 watch 터미널에 다음이 표시됩니다.
@@ -207,14 +249,15 @@ NAME                     READY   STATUS    RESTARTS   AGE
 --
 ====
 
-Notice that the Pod name is the `serviceName` with a `-0`, as it is the first (`0` th if you will) instance.  This is as we explained <<hostname-formula,above>>
+Pod 이름은 첫 번째(원하는 경우 `0` 번째) 인스턴스이므로 `-0`이 포함된 `serviceName`입니다. + 
 
-Now let's take a look at the stateful set itself
+
+이제 Stateful 세트 자체를 살펴보겠습니다.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get statefulsets
+oc get statefulsets
 ----
 
 [.console-output]
@@ -224,17 +267,17 @@ NAME                  READY   AGE
 quarkus-statefulset   1/1     109s
 ----
 
-As with `deployments` we can scale `statefulsets`
+`배포`와 마찬가지로 `statefulsets`를 확장할 수 있습니다.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl scale sts \#<.>
+oc scale sts \
   quarkus-statefulset --replicas=3
 ----
-<.> `sts` is the shortname of the `statefulset` api-resource
+NOTE: `sts`는 `statefulset` API 리소스의 단축 이름입니다.
 
-Then in the watch terminal see
+==Terminal#2에서 확인: 다음을 참조하십시오.
 
 [tabs]
 ====
@@ -252,14 +295,14 @@ quarkus-statefulset-0   1/1     Running   0          95s
 --
 ====
 
-Notice that the name of the Pods continues to use <<hostname-formula,the same nomenclature that we called out above>>
+Pod의 이름은 계속해서 <<hostname-formula, 위에서 호출한 것과 동일한 명명법>>을 사용합니다.
 
-Also, if you check the order of events in the Kubernetes cluster, you'll notice that the Pod name ending with `-1` is created *before* those with higher ordinal index (e.g. with suffix of `-2`).
+또한 Kubernetes 클러스터의 이벤트 순서를 확인하면 `-1`로 끝나는 Pod 이름이 더 높은 순서 인덱스(예: 접미사 `-2`)를 가진 Pod보다 *앞에* 생성되는 것을 알 수 있습니다.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl get events --sort-by=.metadata.creationTimestamp
+oc get events --sort-by=.metadata.creationTimestamp
 ----
 
 [.console-output]
@@ -276,9 +319,10 @@ kubectl get events --sort-by=.metadata.creationTimestamp
 4m2s        Normal   Started                   pod/quarkus-statefulset-2         Started container quarkus-statefulset
 ----
 
-=== Stable Network Identities
+=== 안정적인 네트워크 ID
 
-The reason we created the *headless service* previously was to ensure that the pods of our stateful set can be found _within_ the cluster (see <<Exposing StatefulSets,Exposing StatefulSets>> for reaching services from outside the cluster).  
+이전에 *헤드리스 서비스*를 만든 이유는 Stateful 세트의 포드를 클러스터 내에서 찾을 수 있도록 하기 위해서였습니다 + 
+(클러스터 외부에서 서비스에 연결하려면 <<Exposing StatefulSets,Exposing StatefulSets>> 참조).  
 
 As each Pod is created, it gets a matching DNS subdomain, taking the form: `$(podname).$(governing service domain)`, where the governing service is defined by the `serviceName` field on the StatefulSetfootnote:[See also the official Kubernetes documentation link:https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id[here]]
 
