@@ -1056,6 +1056,7 @@ oc label nodes ${NODE} color-
 그리고 watch 출력이 *변경되지 않고* 실행 중인 경우 포드가 계속 실행된다는 점을 확인하세요.
 
 == Terminal#2
+
 [.console-output]
 [source,bash]
 ----
