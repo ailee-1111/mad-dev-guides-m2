@@ -204,6 +204,7 @@ node/node01 untainted
 
 
 === 포드 toleration
+
 toleration은 노드 taint와 유사하게 키, 값 및 효과로 구성됩니다. toleration에는 operator 매개 변수도 포함됩니다. operator 매개 변수에 사용할 수 있는 값은 다음과 같습니다.
 
 * *Equal*
@@ -233,6 +234,7 @@ spec:
     tolerationSeconds: 3600
 ...output omitted...
 ---- 
+
 OpenShift는 key1=value1:NoExecute taint를 사용하여 노드에서 포드를 예약할 수 있습니다. OpenShift가 taint가 있는 노드에서 포드를 예약하는 경우 노드에서 3600초 동안 포드가 실행된 후, 노드가 포드를 제거하고 OpenShift에서 포드를 다른 노드로 다시 예약합니다.
 
 *  *포드 예약 및 노드 조건*
@@ -399,7 +401,7 @@ No resources found in myspace namespace.
 무슨 일이 일어나고 있는지 관찰할 수 있도록 다른 Terminal#2를 열고 다양한 작업을 실행할 때 어떤 일이 일어나는지 `관찰`해 보겠습니다.
 
 
-===Terminal#2에서 작업
+=== Terminal#2에서 작업
 
 
 [.console-input]
@@ -443,10 +445,8 @@ Name:               ip-10-0-150-226.eu-central-1.compute.internal
 Taints:             <none>
 ----
 
-[NOTE]
-====
-이 경우 '마스터' 노드에는 애플리케이션 포드가 예약되는 것을 차단하는 오염이 포함되어 있습니다.
-====
+NOTE: 이 경우 '마스터' 노드에는 애플리케이션 포드가 예약되는 것을 차단하는 오염이 포함되어 있습니다.
+
 
 모든 노드에 taint를 추가해 보겠습니다.
 
@@ -469,6 +469,7 @@ node/ip-10-0-162-206.eu-central-1.compute.internal tainted
 node/ip-10-0-168-102.eu-central-1.compute.internal tainted
 node/ip-10-0-175-64.eu-central-1.compute.internal tainted
 ----
+
 color=blue는 단순히 오염을 식별하기 위한 키=값 쌍이고 NoSchedule은 오염을 "허용"할 수 없는 포드에 대한 특정 효과입니다.  즉, Pod가 "color=blue"를 허용하지 않으면 효과는 "NoSchedule"이 됩니다.
 
 
@@ -520,19 +521,6 @@ myboot-7cbfbd9b89-hqx6h   0/1     #Pending#   4m12s   devnation
 사용 가능한 예약 가능한 노드가 없으므로 포드는 'Pending' 상태로 유지됩니다.
 
 다음을 입력하면 이에 대한 더 많은 통찰력을 얻을 수 있습니다.
-
-
-Terminal 1
-+
---
-// 태그가 지정되지 않은 모든 지역과 openshift로 태그가 지정된 모든 지역을 포함합니다.
-// See: https://docs.asciidoctor.org/asciidoc/latest/directives/include-tagged-regions/#tagging-regions
-include::partial$taint-remove-taint.adoc[tags=**;!*;openshift]
-
-
-// tag::openshift[]
-:chosen-node: ip-10-0-140-186.eu-central-1.compute.internal
-// end::openshift[]
 
 
 
@@ -597,6 +585,7 @@ ip-10-0-175-64.eu-central-1.compute.internal    Ready    worker   18h   v1.16.2
 ----
 kubectl taint node ip-10-0-175-64.eu-central-1.compute.internal color:NoSchedule- 
 ----
+
 IMPORTANT : nodename은 실제 조회된 nodenamewnd 하나를 입력합니다.
 
 NOTE:  여기에 `-`를 추가하는 것은 문제의 오염을 제거한다는 의미입니다(`NoSchedule` 작업과 함께 `color`).
@@ -818,7 +807,8 @@ Terminal#2에서 다음을 확인합니다.
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-watch oc get pod
+watch -n 1 "oc get pods -o wide \
+  | awk '{print \$1 \" \" \$2 \" \" \$3 \" \" \$5 \" \" \$7}' | column -t"
 ----
 
 
@@ -833,7 +823,7 @@ myboot-7cbfbd9b89-wpddg   1/1     Running   47s   devnation-m02
 
 이제 포드가 실행 중인 노드를 찾아보겠습니다.
 
-==Terminal#1에서 실행
+== Terminal#1에서 실행
 
 
 [.console-input]
@@ -861,14 +851,8 @@ NOTE:  `.items[0]`은 모든 포드를 요청하지만 목록에 요소가 하�
 kubectl taint node ${NODE} color=blue:NoExecute
 ----
 
+이 작업을 수행하자마자 Terminal#2 watch에서 이 "일정 변경"이 발생하는 것을 볼 수 있어야 합니다.
 
-As soon as we do this, we should be able to watch this "rescheduling" occur in the {watch-terminal} watch
-
-[tabs]
-====
-{watch-terminal}::
-+
---
 
 [.console-output]
 [source,bash,subs="+quotes"]
@@ -878,62 +862,49 @@ myboot-7cbfbd9b89-5t24z   0/1     #ContainerCreating#   16s   devnation
 myboot-7cbfbd9b89-wpddg   1/1     #Terminating#         65m   devnation-m02
 ----
 
---
-====
 
 [NOTE]
 ====
-If you have more nodes available then the Pod is terminated and deployed onto another node, if it is not the case, then the Pod will remain in `Pending` status.
+사용 가능한 노드가 더 있으면 포드가 종료되고 다른 노드에 배포됩니다. 그렇지 않은 경우 포드는 '보류 중' 상태로 유지됩니다.
 ====
+
 
 === Clean Up
 
-[tabs]
-====
-Terminal 1::
-+
---
+== Terminal#1에서 작업
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete -f apps/kubefiles/myboot-deployment.yml
+oc delete deployment myboot
 ----
---
-====
 
-And remove the NoExecute taint 
 
-[tabs]
-====
-Terminal 1::
-+
---
+NoExecute 오염을 제거합니다.
+
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl taint node pass:[${NODE}] color=blue:NoExecute-
+kubectl taint node ${NODE} color=blue:NoExecute-
 ----
---
-====
+
+
+
 
 == Affinity & Anti-Affinity
 
-There is another way of changing where Pods are scheduled using Node/Pod Affinity and Anti-affinity.
-You can create rules that not only ban where Pods can run but also to favor where they should be run.
+Node/Pod Affinity 및 Anti-affinity를 사용하여 Pod가 예약되는 위치를 변경하는 또 다른 방법이 있습니다. + 
+Pod가 실행될 수 있는 위치를 금지할 뿐만 아니라 Pod가 실행되어야 하는 위치를 선호하는 규칙을 만들 수 있습니다.
 
-In addition to creating affinities between Pods and Nodes, you can also create affinities between Pods.  You can decide that a group of Pods should be always be deployed together on the same node(s).
-Reasons such as significant network communication between Pods and you want to avoid external network calls or perhaps shared storage devices.
+포드와 노드 간의 유사성을 생성하는 것 외에도 포드 간에 유사성을 생성할 수도 있습니다.  + 
+Pod 그룹이 항상 동일한 노드에 함께 배포되어야 한다고 결정할 수 있습니다. Pod 간의 중요한 네트워크 통신과 같은 이유 때문에 외부 네트워크 호출이나 공유 저장 장치를 피하려고 합니다.
+
 
 === Node Affinity
 
-:quick-open-file: myboot-node-affinity.yml
-
-Let's deploy a new pod with a node affinity.  Take a look at `{quick-open-file}` (relevant section shown below)
-
-include::partial$tip_vscode_quick_open.adoc[]
+노드 선호도를 사용하여 새 포드를 배포해 보겠습니다. 아래 내용을 살펴보세요.
 
 [source, yaml]
-.{quick-open-file}
 ----
 spec:
   affinity:
@@ -949,127 +920,165 @@ spec:
       - name: myboot
         image: quay.io/rhdevelopers/myboot:v1
 ----
-<.> This key highlights that what's follows must be used during scheduling but not a factor once a pod is executing
-<.> The `matchExpressions` is saying this pod has affinity for any node with a `color` in the value set `blue`
+<.> 이 핵심은 스케줄링 중에 다음 사항을 사용해야 하지만 Pod가 실행된 후에는 고려하지 않는다는 점을 강조합니다.
+<.> `matchExpressions`는 이 포드가 `blue` 값 세트에 `color`가 있는 모든 노드에 대해 선호도가 있음을 나타냅니다.
 
-Now let's deploy this
+이제 이를 배포해 보겠습니다.
 
-[tabs]
-====
-Terminal 1::
-+
---
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-node-affinity.yml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: color
+                operator: In
+                values:
+                - blue
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        ports:
+          - containerPort: 8080
+EOF
 ----
---
-====
 
-And we'll see in our watch window the pod in a pending state
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+그러면 감시 창에서 보류 상태의 포드를 볼 수 있습니다.
+
+==Terminal#2에서 확인
+
 [.console-output]
 [source,bash,subs="+macros,+attributes,+quotes"]
 ----
 NAME                      READY   STATUS    AGE   NODE
 myboot-546d4d9b45-7vgfc   0/1     #Pending#   6s    <none>
 ----
---
-====
 
-Let's create a *label* on a node matching the affinity expression:
 
-[tabs]
-====
-Terminal 1 - Minikube::
-+
---
-include::partial$affinity_label.adoc[tags=**;!*;minikube]
---
-Terminal 1 - OpenShift::
-+
---
-include::partial$affinity_label.adoc[tags=**;!*;openshift]
---
-====
+선호도 표현식과 일치하는 노드에 *레이블*을 만들어 보겠습니다.
 
-And then in the watch window the output should change to:
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+
+
+노드 목록을 가져옵니다.
+
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
+oc get nodes
+----
+
+[.console-output]
+[source,bash,subs="+attributes,+quotes"]
+----
+NAME                                            STATUS   ROLES    AGE   VERSION
+ip-10-0-136-107.eu-central-1.compute.internal   Ready    master   26h   v1.16.2
+ip-10-0-140-186.eu-central-1.compute.internal   Ready    worker   26h   v1.16.2
+ip-10-0-141-128.eu-central-1.compute.internal   Ready    worker   25h   v1.16.2
+ip-10-0-146-109.eu-central-1.compute.internal   Ready    worker   25h   v1.16.2
+ip-10-0-150-226.eu-central-1.compute.internal   Ready    worker   26h   v1.16.2
+ip-10-0-155-122.eu-central-1.compute.internal   Ready    master   26h   v1.16.2
+ip-10-0-162-206.eu-central-1.compute.internal   Ready    worker   26h   v1.16.2
+ip-10-0-168-102.eu-central-1.compute.internal   Ready    master   26h   v1.16.2
+----
+
+그런 다음 목록에서 레이블을 지정할 노드를 선택합니다
+
+[.console-input]
+[source,bash,subs="+macros,+attributes,+quotes"]
+----
+oc label nodes ip-10-0-150-226.eu-central-1.compute.internal  color=blue
+----
+IMPORTANT: nodename은 실제 조회 된 목록에서 가져와야 합니다. +
+`color=blue` 이는 포드의 어피니티와 일치합니다.
+
+[.console-output]
+[source,bash,subs="+attributes"]
+----
+node/ip-10-0-150-226.eu-central-1.compute.internal labeled
+----
+
+
+그런 다음 Terminal#2 창에서 출력이 다음과 같이 변경되어야 합니다.
+
+
 [.console-output]
 [source,bash,subs="+macros,+attributes,+quotes"]
 ----
 NAME                      READY   STATUS              AGE   NODE
 myboot-546d4d9b45-7vgfc   0/1     #ContainerCreating#   15m   devnation-m02
 ----
---
-====
 
 
-Let's delete the label from the node that the pod is running on
 
-[tabs]
-====
-Terminal 1::
-+
---
-First find the node the pod is running on
+포드가 실행 중인 노드에서 라벨을 삭제해 보겠습니다.
 
-include::partial$find_node_for_pod.adoc[]
 
-and then remove the color label from it
+먼저 포드가 실행 중인 노드를 찾습니다.
+
+[.console-input]
+[source,bash,subs="+macros"]
+----
+NODE=$(kubectl get pod -o jsonpath='{.items[0].spec.nodeName}')
+echo ${NODE}
+----
+
+그런 다음 색상 라벨을 제거하세요.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl label nodes pass:[${NODE}] color-
+oc label nodes ${NODE} color-
 ----
---
-====
 
-And notice the that watch output is *unchanged* and if running, the pod will continue to run
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+그리고 watch 출력이 *변경되지 않고* 실행 중인 경우 포드가 계속 실행된다는 점을 확인하세요.
+
+== Terminal#2
 [.console-output]
 [source,bash]
 ----
 NAME                      READY   STATUS    AGE   NODE
 myboot-546d4d9b45-7vgfc   1/1     Running   22m   devnation-m02
 ----
---
-====
 
-Since we used the `requiredDuringSchedulingIgnoredDuringExecution` in the deployment spec for our pod, we got our affinity to work like taints (in the previous section) worked, namely, that the rule is set during the scheduling phase but ignore after that (i.e. once executing).  Therefore the Pod is not removed in our case.
 
-This is an example of a _hard_ rule:
+Pod의 배포 사양에서 'requiredDuringSchedulingIgnoredDuringExecution'을 사용했기 때문에 이전 섹션의 taint처럼 작동하는 친화력을 얻었습니다. 즉, 규칙은 예약 단계에서 설정되지만 그 이후에는 무시됩니다(예: 일단 실행되면  ).  따라서 우리의 경우에는 Pod가 제거되지 않습니다. 다음은 _하드_ 규칙의 예입니다.
 
 .Hard Rule
 ****
-If the Kubernetes scheduler does not find any node with the required label then the Pod reminds in _Pending_ state.
+Kubernetes 스케줄러가 필수 라벨이 있는 노드를 찾지 못하면 Pod는 _Pending_ 상태로 알려줍니다.
 ****
 
-There is also a way to create a _soft_ rule:
+_soft_ 규칙을 만드는 방법도 있습니다:
 
 .Soft Rule
 ****
-The Kubernetes scheduler attempts to match the rules but if it can.  However, if it can't then the Pod is scheduled to any node.  
+Kubernetes 스케줄러는 규칙과 일치하려고 시도하지만 가능한 경우.  하지만 그렇게 할 수 없는 경우 포드는 모든 노드에 예약됩니다. 
 ****
 
-Consider the example below:
+아래 예를 고려하십시오.
 
 [.console-output]
 [source,yaml,subs="+macros,+attributes,+quotes"]
@@ -1086,23 +1095,25 @@ spec:
             values:
             - blue
 ----
-<.> You can see the use of the word _preferred_ vs _required_.
+<.> _preferred_와 _required_라는 단어의 사용을 볼 수 있습니다.
+
 
 ==== Clean Up
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete -f apps/kubefiles/myboot-node-affinity.yml
+oc delete deployment myboot
 ----
+
+
 
 === Pod Affinity/Anti-Affinity
 
-:quick-open-file: myboot-pod-affinity.yml
 
-Let's deploy a new pod with a Pod Affinity.  See this relevant part of `{quick-open-file}`.  
 
-include::partial$tip_vscode_quick_open.adoc[]
+Pod Affinity를 사용하여 새 Pod를 배포해 보겠습니다.  `{quick-open-file}`의 관련 부분을 참조하세요. 
+
 
 [source, yaml]
 .{quick-open-file}
@@ -1120,18 +1131,47 @@ spec:
             - myboot # <2>
   containers:
 ----
-<1> The node label key. If two nodes are labeled with this key and have identical values, the scheduler treats both nodes as being in the same topology. In this case, `hostname` is a label that is different for each node.
-<2> The affinity is with Pods labeled with `app=myboot`.
+<1> 노드 레이블 키입니다.  두 노드가 이 키로 레이블이 지정되고 동일한 값을 갖는 경우 스케줄러는 두 노드를 동일한 토폴로지에 있는 것으로 처리합니다.  이 경우 `hostname`은 노드마다 다른 레이블입니다.
+<2> 선호도는 'app=myboot' 라벨이 지정된 Pod와 관련됩니다.
 
-[tabs]
-====
-Terminal 1::
-+
---
+==Terminal#1에서 수행
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-affinity.yml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot2
+  name: myboot2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot2
+  template:
+    metadata:
+      labels:
+        app: myboot2
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector: 
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - myboot
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        ports:
+          - containerPort: 8080
+EOF
 ----
 
 [.console-output]
@@ -1143,30 +1183,43 @@ myboot2-7c5f46cbc9-hwm2v  0/1    Pending  5h38m  <none>
 --
 ====
 
-The `myboot2` Pod is pending as couldn't find any Pod matching the affinity rule.
+선호도 규칙과 일치하는 포드를 찾을 수 없어 'myboot2' 포드가 보류 중입니다. 이 문제를 해결하려면 'app=myboot' 라벨이 지정된 'myboot' 애플리케이션을 배포해 보겠습니다.
 
-To address this, let's deploy a  `myboot` application labeled with `app=myboot`.
+== Terminal#1에서 수행
 
-[tabs]
-====
-Terminal 1::
-+
---
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-deployment.yml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot
+  name: myboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot
+  template:
+    metadata:
+      labels:
+        app: myboot
+    spec:
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        ports:
+          - containerPort: 8080
+EOF
 ----
---
-====
 
-And we'll see that both start up, and run on _the same node_
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+그러면 둘 다 시작되고 _동일한 노드_에서 실행되는 것을 볼 수 있습니다.
+
+== Terminal#2에서 확인
+
 [.console-output]
 [source,bash,subs="+quotes"]
 ----
@@ -1174,12 +1227,11 @@ NAME                      READY  STATUS             AGE    NODE
 myboot-7cbfbd9b89-267k6   0/1    ContainerCreating  5s     #devnation-m02#
 myboot2-7c5f46cbc9-hwm2v  0/1    ContainerCreating  5h45m  #devnation-m02#
 ----
---
-====
+
 
 [TIP]
 ====
-What you've just seen is a _hard_ rule, you can use a "soft" rules as well in Pod Affinity.
+방금 본 것은 _하드_ 규칙입니다. Pod Affinity에서도 "소프트" 규칙을 사용할 수 있습니다.
 
 [.console-output]
 [source, yaml, subs="+quotes"]
@@ -1200,13 +1252,11 @@ spec:
 ----
 ====
 
-*Anti-affinity* is used to insure that two Pods do NOT run together on the same node.
+*Anti-affinity*는 두 개의 포드가 동일한 노드에서 함께 실행되지 않도록 하는 데 사용됩니다.
 
-:quick-open-file: myboot-pod-antiaffinity.yaml
 
-Let's add another pod.  Open `{quick-open-file}` and focus on the following part
+다른 포드를 추가해 보겠습니다.  `{quick-open-file}`의 다음 부분에 집중하세요
 
-include::partial$tip_vscode_quick_open.adoc[]
 
 [.console-output]
 [source, yaml]
@@ -1225,30 +1275,52 @@ spec:
             - myboot
 ----
 
-This basically says that this pod should not be scheduled on any individual node (`topologyKey: kubernetes.io/hostname`) that has a pod with the `app=myboot` label.
+이는 기본적으로 `app=myboot` 라벨이 있는 포드가 있는 개별 노드(`topologyKey: kubernetes.io/hostname`)에서 이 포드를 예약해서는 안 된다는 것을 의미합니다. 
+위의 반선호도 규칙을 사용하여 myboot3을 배포합니다.
 
-Deploy a myboot3 with the above anti-affinity rule
 
-[tabs]
-====
-Terminal 1::
-+
---
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl apply -f apps/kubefiles/myboot-pod-antiaffinity.yaml
+cat <<EOF | oc create -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myboot3
+  name: myboot3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myboot3
+  template:
+    metadata:
+      labels:
+        app: myboot3
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector: 
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - myboot
+      containers:
+      - name: myboot
+        image: quay.io/rhdevelopers/myboot:v1
+        ports:
+          - containerPort: 8080
+EOF
 ----
---
-====
 
-And then notice what happens in the watch window
 
-[tabs]
-====
-{watch-terminal}::
-+
---
+그런 다음 Watch 창에서 무슨 일이 일어나는지 확인하세요.
+
+=
 [.console-output]
 [source,bash,subs="+macros,+attributes,+quotes"]
 ----
@@ -1257,25 +1329,19 @@ myboot-7cbfbd9b89-267k6   1/1    Running            10m    devnation-m02
 myboot2-7c5f46cbc9-hwm2v  1/1    Running            5h56m  devnation-m02
 myboot3-6f95c866f6-7kvdw  0/1    ContainerCreating  6s     #devnation# 
 ----
---
-====
 
-As you can see from the highlight, the `myboot3` Pod is deployed in a different node than the `myboot` Pod
+
+하이라이트에서 볼 수 있듯이 'myboot3' 포드는 'myboot' 포드와 다른 노드에 배포됩니다.
 
 ==== Clean Up
 
-[tabs]
-====
-Terminal 1::
-+
---
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl delete -f apps/kubefiles/myboot-pod-affinity.yml
-kubectl delete -f apps/kubefiles/myboot-pod-antiaffinity.yaml
-kubectl delete -f apps/kubefiles/myboot-deployment.yml
+oc delete deployment myboot
+oc delete deployment myboot2
+oc delete deployment myboot3
 ----
---
-====
+
 
