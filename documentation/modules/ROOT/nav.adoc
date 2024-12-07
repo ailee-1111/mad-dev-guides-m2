@@ -10,7 +10,6 @@
 ** xref:2-6-blue-green.adoc[Blue/Green Deployments]
 
 * 3. Kubernetes#2
-** xref:3-1-building-images.adoc[Building Images]
 ** xref:3-2-resources.adoc[Resources and Limits]
 ** xref:3-3-rolling-updates.adoc[Rolling updates]
 ** xref:3-4-live-ready.adoc[Liveness, Readiness & Startup]
