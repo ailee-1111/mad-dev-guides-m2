@@ -4,34 +4,37 @@ include::_attributes.adoc[]
 :log-terminal: Terminal 3
 :section-namespace: pizzahat
 
-Operators are a way of extending the functionality of our Kubernetes cluster by installing automated controllers to manage extensions we provide to the underlying Kubernetes API.  
-
-In this section we'll take a deeper look at how operators interact with the Kubernetes API to do this
+Operator는 기본 Kubernetes API에 제공되는 확장을 관리하기 위해 자동화된 컨트롤러를 설치하여 Kubernetes 클러스터의 기능을 확장하는 방법입니다.
+이 섹션에서는 운영자가 이를 수행하기 위해 Kubernetes API와 상호 작용하는 방법을 자세히 살펴보겠습니다.
 
 .Operators in the Real World
 ****
-When demonstrating this tutorial in a master class, it can be good to show the Kafka Operator in Openshift (as roughly outlined <<Kafka for OpenShift,here>>).  Key Points when showing on an OpenShift cluster: 
+마스터 클래스에서 이 튜토리얼을 시연할 때 Openshift에서 Kafka Operator를 보여주는 것이 좋습니다(대략 <<OpenShift용 Kafka,여기>> 설명 참조).  OpenShift 클러스터에 표시할 때의 핵심 사항:
 
-. Use OperatorHub to show how many different Operators there are.  
-. Install the `AMQStreams` or `Strimzi` Operator to add Kafka support (i.e. CRDs as we'll see) to the cluster 
-. Once the operator is installed, pick a namespace to install a `Kafka` CR in
-. Show in the Developer Perspective the Kafka being created by the operator
+. OperatorHub를 사용하여 얼마나 많은 Operator가 있는지 확인하세요.  +
+. 클러스터에 Kafka 지원(즉, 앞으로 보게 될 CRD)을 추가하려면 'AMQStreams' 또는 'Strimzi' Operator를 설치하세요. + 
+. Operator가 설치되면 'Kafka' CR을 설치할 네임스페이스를 선택합니다. +
+. Operator Perspective에서 Operator가 생성 중인 Kafka를 표시합니다.
 
-In this section of the tutorial we'll be demonstrating these aspects of operators with a home grown toy "Pizza Operator"
+튜토리얼의 이 섹션에서는 직접 만든 장난감 "피자 오퍼레이터"를 사용하여 오퍼레이터의 이러한 측면을 시연해 보겠습니다.
 ****
 
 == Preparation
 
-=== Namespace
+=== Namespace 준비
 
-We'll need a namespace where we're house our operator deployment and our `CustomResources` upon which the operator will operate
+Operator 배포를 수용할 네임스페이스와 Operator가 작동할 `CustomResources`가 필요합니다.
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-kubectl create namespace {section-namespace}
+oc create namespace {section-namespace}
 kubectl config set-context --current --namespace={section-namespace}
 ----
+
+
+
+
 
 === Watch
 
