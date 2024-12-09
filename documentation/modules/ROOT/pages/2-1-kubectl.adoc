@@ -43,7 +43,7 @@ image::2-1.png[2-1]
 image::2-3.png[2-3]
 
 [[talk]]
-== 클러스터에 로그인하고, 설정을 확인하세요.
+== 클러스터에 로그인하고, 설정을 확인
 
 NOTE: 일반적으로 클러스터에서 oc(kubectl) 명령어를 사용하기 위해서는 `oc login` 명령어를 통해 클러스터에 로그인해야 합니다. +
 이 실습에서는 OpenShift의 웹콘솔에서 제공하는 웹터미널을 사용하기 때문에(이미 웹콘솔 로그인이 되어 있기 때문에) 로그인 단계가 필요없습니다.
@@ -143,7 +143,7 @@ Kubernetes에서 노드 는 포드를 실행할 수 있는 클러스터의 단�
 
 
 [[view-nodes]]
-== 클러스터를 구성하는 Nodes를 확인하세요.
+== 클러스터를 구성하는 Nodes 확인
 
 [#kubectl-get-nodes]
 [.console-input]
@@ -234,7 +234,7 @@ OpenShift 기능을 탐색할 때 OpenShift, Kubernetes, 컨테이너 기술에 
 
 
 
-== 클러스터에 배포되어 있는 `Pods` 를 확인하세요.
+== 클러스터에 배포되어 있는 `Pods` 를 확인
 
 
 [#kubectl-get-pods]
@@ -341,7 +341,7 @@ NOTE: `oc create deployment myapp --image=quay.io/rhdevelopers/quarkus-demo:v1` 
 
 
 [[monitor-events]]
-== 배포를 진행하는 동안 이벤트를 모니터링하세요.
+== 배포를 진행하는 동안 이벤트를 모니터링
 
 [#kubectl-get-events]
 [.console-input]
@@ -447,7 +447,8 @@ oc logs -l app=myapp
 NOTE: `oc logs -l app=myapp` : `app=myapp` label이 포함된 pod의 로그를 출력합니다.
 
 
-== Service를 노출시키세요.
+== Service 노출
+
 [#kubectl-expose]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -455,7 +456,7 @@ NOTE: `oc logs -l app=myapp` : `app=myapp` label이 포함된 pod의 로그를 �
 oc expose deployment myapp --port=8080 --type=LoadBalancer
 ----
 
-=== 수행하는 동안 서비스를 조회하세요.
+수행하는 동안 서비스를 조회하세요.
 
 [#{section-k8s}-kubectl-watch-services]
 [.console-input]
@@ -532,7 +533,7 @@ image::2-4.png[2-4]
 
 
 
-=== Terminal 1번
+* *Terminal 1번*
 
 
 [#kubectl-deploy-app]
@@ -557,7 +558,7 @@ watch oc get pods
 
 NOTE: 터미널 1번은 지속적으로 pod list를 출력하며, replicaset이 변경됨에 따라 pod수가 1개에서 3개로 늘어나는 것을 확인할 수 있습니다.
 
-=== Terminal 2번
+* *Terminal 2번*
 
 
 [#kubectl-deploy-app]
@@ -623,7 +624,7 @@ Supersonic Subatomic Java with Quarkus myapp-5dcbf46dfc-ghrk4:293
 NOTE: 터미널 2번은 지속적으로 3개의 pod로의 curl poling을 시도합니다. application의 이미지를 변경하여 Rolling update가 진행됨에 따라 실시간으로 poling 결과값이 변하는 것을 관찰할 수 있습니다.
 
 
-=== Terminal 3번
+* *Terminal 3번*
 
 [#kubectl-deploy-app]
 [.console-input]
