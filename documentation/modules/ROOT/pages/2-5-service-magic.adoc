@@ -2,6 +2,7 @@
 
 네임스페이스 생성:
 
+== Terminal#1에서 작업
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -122,7 +123,7 @@ spec:
 EOF
 ----
 
-NOTE: 아래의 명령어는 별도의 터미널을 열어 작업합니다.
+NOTE: 아래의 명령어는 별도의 터미널에서 작업합니다.
 
 
 === Terminal#2에서 작업 
@@ -223,7 +224,7 @@ oc get endpoints my-service -o json | jq '.subsets[].addresses[].ip'
 ----
 jq: error (at <stdin>:18): Cannot iterate over null (null)
 ----
-NOTE: 현재 Service가 선택할 수 없는 Pod가 없기 때문에 IP 조회가 실패합니다.
+NOTE: 현재 Service가 선택할 수 있는 Pod가 없기 때문에 IP 조회가 실패합니다.
 
 
 OpenShift와 같은 호스팅된 Kubernetes 클러스터를 사용하는 경우 `8080` 포트와 함께 `curl` 및 EXTERNAL-IP 주소를 사용하거나 `kubectl(oc)` 을 사용하여 가져옵니다.:
@@ -320,7 +321,11 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 Python Hello on mypython-deployment-6874f84d85-2kpjl
 ----
 
+
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mypython)에서 응답합니다.
+
+NOTE: 응답까지 조금 시간이 걸릴 수 있습니다.
+
 
 == Terminal#3에서 작업
 
@@ -360,6 +365,7 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 ----
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mypython)에서도 응답합니다.
+
 
 == Terminal#3에서 작업
 
