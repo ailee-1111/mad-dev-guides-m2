@@ -228,7 +228,7 @@ metadata:
   namespace: myspace-%userid%
 spec:
   rules:
-    - host: stuff-myspace-%userid%.apps.cluster-8md2z.8md2z.sandbox312.opentlc.com
+    - host: stuff-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
       http:
         paths:
           - path: /
