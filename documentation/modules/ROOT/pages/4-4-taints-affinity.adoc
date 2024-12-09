@@ -823,7 +823,7 @@ myboot-7cbfbd9b89-wpddg   1/1     Running   47s   devnation-m02
 
 이제 포드가 실행 중인 노드를 찾아보겠습니다.
 
-== Terminal#1에서 실행
+* *Terminal#1에서 실행*
 
 
 [.console-input]
