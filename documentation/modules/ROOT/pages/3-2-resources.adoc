@@ -633,7 +633,7 @@ watch -n 1 -- oc get pods
 
 
 다른 터미널에서 해당 서비스를 반복하고 컬링합니다.
-== Terminal 2
+* *Terminal#2에서 수행*
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -682,7 +682,7 @@ done
 
 또 다른 터미널 창에서 /sysresources 엔드포인트를 컬링합니다.
 
-== Terminal#3
+* *Terminal#3에서 수행*
 
 
 [#kubectl-deploy-app]
@@ -772,7 +772,9 @@ curl: (52) Empty reply from server
 ----
 
 그리고 루프도 실패한다는 것을 알 수 있습니다.
-== Terminal#2
+
+* *Terminal#2*
+
 [.console-output]
 [source,bash]
 ----
@@ -783,7 +785,8 @@ curl: (56) Recv failure: Connection reset by peer
 오류를 확인하려면 포드를 확인하세요.
 
 
-== Terminal#3
+* *Terminal#3*
+
 [#no-limits-resource]
 [.console-input]
 [source, bash]
@@ -827,7 +830,7 @@ oc describe $PODNAME
 }
 ----
 
-== Terminal#1
+* *Terminal#1*
 
 `watch oc get pods`의 STATUS 열에 OOMKilled가 반영되는 것을 볼 수도 있습니다.
 
