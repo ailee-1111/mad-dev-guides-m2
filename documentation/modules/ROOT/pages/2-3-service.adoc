@@ -252,7 +252,7 @@ Ingress에 설정된 host name을 통해 curl 요청을 합니다.
 [.console-input]
 [source, bash]
 ----
-curl stuff-myspace-%userid%.apps.cluster-8md2z.8md2z.sandbox312.opentlc.com
+curl stuff-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
 ----
 
 
@@ -307,7 +307,7 @@ oc get routes
 [source,bash]
 ----
 NAME          HOST/PORT                                     PATH   SERVICES      PORT   TERMINATION   WILDCARD
-the-service   the-service-myspace-%userid%.apps.cluster-8md2z.8md2z.sandbox312.opentlc.com          the-service   8080                 None
+the-service   the-service-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com          the-service   8080                 None
 ----
 
 그런 다음 서비스에 요청하십시오.:
@@ -316,7 +316,7 @@ the-service   the-service-myspace-%userid%.apps.cluster-8md2z.8md2z.sandbox312.o
 [.console-input]
 [source, bash]
 ----
-curl the-service-myspace-%userid%.apps.cluster-8md2z.8md2z.sandbox312.opentlc.com
+curl the-service-myspace-%userid%.apps.cluster-vgrd5.vgrd5.sandbox557.opentlc.com
 ----
 
 
