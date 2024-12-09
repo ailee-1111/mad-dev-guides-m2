@@ -77,7 +77,7 @@ No resources found in myspace namespace.
 
 === Watch
 
-=== Terminal#2에서 작업
+* *Terminal#2에서 작업*
 
 
 [.console-input]
@@ -161,7 +161,7 @@ EOF
 
 그런 다음 Watch 창에서 다음과 같은 내용을 볼 수 있습니다.
 
-== Terminal#2에서 확인
+* *Terminal#2에서 확인*
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
@@ -386,9 +386,10 @@ EOF
 
 ----
 
-그리고 우리 Pod Watch에서 우리는
 
-== Terminal#2에서 확인
+
+* *Terminal#2에서 확인*
+
 [.console-output]
 [source,bash,subs="+macros,+attributes,+quotes"]
 ----
@@ -426,7 +427,7 @@ cat: /tmp/demo/greeting.txt: No such file or directory
 
  *첫 번째* 컨테이너에 액세스하여 *두 번째* 컨테이너가 볼 수 있는 파일을 생성할 수 있는지 살펴보겠습니다.
 
-== Terminal#3에서 작업
+* *Terminal#3에서 작업*
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -681,7 +682,9 @@ NOTE: 아직 파일이 확인되지 않습니다.
 
 
 
-== Terminal#3에서 파일을 생성해 보겠습니다.
+* *Terminal#3*
+
+파일을 생성해 보겠습니다.
 
 
 [#kubectl-deploy-app]
@@ -850,7 +853,7 @@ my-persistent-volume-%userid%                       100Mi      RWO            Re
 다음 새 watch를 시작해 보세요.
 
 
-== Terminal#2에서 수행
+* *Terminal#2에서 수행*
 
 
 
@@ -1297,7 +1300,7 @@ EOF
 
 
 
-== Terminal#2에서 수행
+* *Terminal#2에서 수행*
 
 [.console-input]
 [source,bash]
