@@ -241,21 +241,14 @@ OpenShift 기능을 탐색할 때 OpenShift, Kubernetes, 컨테이너 기술에 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc get pods --all-namespaces
+oc get pods -n globex-user1
 ----
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
-NAMESPACE                                          NAME                                                                       READY   STATUS             RESTARTS          AGE
-3scale                                             apicast-production-1-4t7vl                                                 1/1     Running            3                 2d
-3scale                                             apicast-production-1-deploy                                                0/1     Completed          0                 2d
-3scale                                             apicast-staging-1-deploy                                                   0/1     Completed          0                 2d
-3scale                                             apicast-staging-1-r44lk                                                    1/1     Running            4 (3h15m ago)     2d
-3scale                                             backend-cron-1-54686                                                       1/1     Running            3                 2d
-3scale                                             backend-cron-1-deploy                                                      0/1     Completed          0                 2d
-3scale                                             backend-listener-1-deploy                                                  0/1     Completed          0                 2d
-....생략....
+NAME                          READY   STATUS    RESTARTS   AGE
+codeserver-85f5475758-pxhvp   1/1     Running   0          3d7h
 ----
 
 
@@ -263,52 +256,34 @@ NAMESPACE                                          NAME                         
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc get pods --all-namespaces --show-labels
+oc get pods -n codeserver-user1 --show-labels
 ----
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
-NAMESPACE                                          NAME                                                                       READY   STATUS             RESTARTS          AGE     LABELS
-3scale                                             apicast-production-1-4t7vl                                                 1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=apicast-production-1,deploymentConfig=apicast-production,deploymentconfig=apicast-production,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=apicast-production,rht.subcomp_t=application,threescale_component=apicast,threescale_component_element=production
-3scale                                             apicast-production-1-deploy                                                0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=apicast-production-1
-3scale                                             apicast-staging-1-deploy                                                   0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=apicast-staging-1
-3scale                                             apicast-staging-1-r44lk                                                    1/1     Running            4 (3h16m ago)     2d      app=3scale-api-management,com.company=Red_Hat,deployment=apicast-staging-1,deploymentConfig=apicast-staging,deploymentconfig=apicast-staging,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=apicast-staging,rht.subcomp_t=application,threescale_component=apicast,threescale_component_element=staging
-3scale                                             backend-cron-1-54686                                                       1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=backend-cron-1,deploymentConfig=backend-cron,deploymentconfig=backend-cron,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=backend-cron,rht.subcomp_t=application,threescale_component=backend,threescale_component_element=cron
-3scale                                             backend-cron-1-deploy                                                      0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=backend-cron-1
-3scale                                             backend-listener-1-deploy                                                  0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=backend-listener-1
-3scale                                             backend-listener-1-xlxh4                                                   1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=backend-listener-1,deploymentConfig=backend-listener,deploymentconfig=backend-listener,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=backend-listener,rht.subcomp_t=application,threescale_component=backend,threescale_component_element=listener
-3scale                                             backend-redis-1-deploy                                                     0/1     Completed          0                 2d      openshift.io/deployer-pod-for.name=backend-redis-1
-3scale                                             backend-redis-1-kg9z4                                                      1/1     Running            3                 2d      app=3scale-api-management,com.company=Red_Hat,deployment=backend-redis-1,deploymentConfig=backend-redis,deploymentconfig=backend-redis,rht.comp=3scale,rht.comp_ver=2.13,rht.prod_name=Red_Hat_Integration,rht.prod_ver=master,rht.subcomp=backend-redis,rht.subcomp_t=application,threescale_component=backend,threescale_component_element=redis
-...생략...
+NAME                          READY   STATUS    RESTARTS   AGE    LABELS
+codeserver-85f5475758-pxhvp   1/1     Running   0          3d7h   app.kubernetes.io/instance=codeserver-user1,app.kubernetes.io/name=codeserver,pod-template-hash=85f5475758
 ----
 
 [#kubectl-get-pods]
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc get pods --all-namespaces -o wide
+oc get pods -n codeserver-user1 -o wide
 ----
 
 [.console-output]
 [source,bash,subs="+macros,+attributes"]
 ----
-NAMESPACE                                          NAME                                                                       READY   STATUS             RESTARTS          AGE     IP             NODE                                        NOMINATED NODE   READINESS GATES
-3scale                                             apicast-production-1-4t7vl                                                 1/1     Running            3                 2d      10.129.2.100   ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
-3scale                                             apicast-production-1-deploy                                                0/1     Completed          0                 2d      <none>         ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
-3scale                                             apicast-staging-1-deploy                                                   0/1     Completed          0                 2d      <none>         ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
-3scale                                             apicast-staging-1-r44lk                                                    1/1     Running            4 (3h17m ago)     2d      10.129.2.97    ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
-3scale                                             backend-cron-1-54686                                                       1/1     Running            3                 2d      10.129.2.94    ip-10-0-29-131.us-east-2.compute.internal   <none>           <none>
-3scale                                             backend-cron-1-deploy                                                      0/1     Completed          0                 2d      <none>         ip-10-0-63-222.us-east-2.compute.internal   <none>           <none>
-3scale                                             backend-listener-1-deploy                                                  0/1     Completed          0                 2d      <none>         ip-10-0-63-222.us-east-2.compute.internal   <none>           <none>
-3scale                                             backend-listener-1-xlxh4                                                   1/1     Running            3                 2d      10.128.2.87    ip-10-0-63-222.us-east-2.compute.internal   <none>           <none>
-...생략...
+NAME                          READY   STATUS    RESTARTS   AGE    IP             NODE                                        NOMINATED NODE   READINESS GATES
+codeserver-85f5475758-pxhvp   1/1     Running   0          3d7h   10.128.2.116   ip-10-0-106-38.us-east-2.compute.internal   <none>           <none>
 ----
 
 
-NOTE: `oc get pods --all-namespaces` : 모든 네임스페이스에서 실행 중인 pod의 정보를 출력합니다. +
-`oc get pods --all-namespaces --show-labels` : 모든 네임스페이스에서 파드 정보를 출력하며, 파드에 적용된 라벨도 함께 표시합니다. +
-`oc get pods --all-namespaces -o wide` : 파드의 정보를 좀 더 상세하게 출력합니다. 예를 들어, 노드의 이름과 IP 주소 등 추가 정보를 보여줍니다.
+NOTE: `oc get pods -n codeserver-user1` : 해당 네임스페이스에서 실행 중인 pod의 정보를 출력합니다. +
+`oc get pods -n codeserver-user1 --show-labels` : 해당 네임스페이스에서 파드 정보를 출력하며, 파드에 적용된 라벨도 함께 표시합니다. +
+`oc get pods -n codeserver-user1 -o wide` : 파드의 정보를 좀 더 상세하게 출력합니다. 예를 들어, 노드의 이름과 IP 주소 등 추가 정보를 보여줍니다.
 
 
 
@@ -392,6 +367,7 @@ o:1.0.0"
 
 NOTE: `watch oc get events` : 클러스터 이벤트를 생성 시간순으로 실시간 모니터링합니다. watch 명령은 주기적으로 결과를 갱신합니다.
 
+NOTE: `watch` 명령어를 종료하려면, [ctrl+c]를 입력합니다.
 
 [[created-objects]]
 == 생성된 Objects를 확인하세요.
@@ -505,6 +481,9 @@ myapp   LoadBalancer   172.30.103.41   <pending>     8080:31974/TCP   4s
 NAME    TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)          AGE
 myapp   LoadBalancer   172.30.103.41   34.71.122.153   8080:31974/TCP   44s
 ----
+
+NOTE: `watch` 명령어를 종료하려면, [ctrl+c]를 입력합니다.
+
 
 == Talk to the App
 
@@ -762,7 +741,16 @@ NOTE: 해당 결과는 터미널 2번에서 확인합니다. 터미널 2번은 �
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
+oc delete all --all -n mystuff-%userid%
+----
+
+NOTE: *mystuff-%userid%* namespace의 모든 리소스가 삭제됩니다.
+
+[#delete-namespace]
+[.console-input]
+[source,bash,subs="+macros,+attributes"]
+----
 oc delete namespace mystuff-%userid%
 ----
 
-NOTE: *mystuff-%userid%* namespace를 삭제합니다.(해당 namespace의 하위 리소스들도 함께 삭제됩니다.)
+NOTE: *mystuff-%userid%* namespace를 삭제합니다.
