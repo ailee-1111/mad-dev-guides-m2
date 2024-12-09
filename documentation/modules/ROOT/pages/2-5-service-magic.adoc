@@ -2,7 +2,7 @@
 
 네임스페이스 생성:
 
-== Terminal#1에서 작업
+* *Terminal#1에서 작업*
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -126,7 +126,7 @@ EOF
 NOTE: 아래의 명령어는 별도의 터미널에서 작업합니다.
 
 
-=== Terminal#2에서 작업 
+* *Terminal#2에서 작업*
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -163,7 +163,7 @@ mypython-deployment-6874f84d85-2kpjl   1/1     Running   0          3m53s   app=
 NOTE: 배포된 pod를 label값을 포함하여 실시간으로 확인합니다. 배포되어 있는 pod들은 inservice=mypods label 값이 없는 것을 확인할 수 있습니다.
 
 
-=== Terminal#1에서 작업 
+* *Terminal#1에서 작업*
 
 `inservice=mypods label` 값을 참조하는 Service를 배포하세요.:
 
@@ -268,7 +268,7 @@ curl: (7) Failed to connect to 35.224.233.213 port 8000: Connection refused
 
 NOTE: 현재 Service가 참조하는 label을 가진 Pod가 없기 때문에 curl은 실패합니다.
 
-== Terminal#3에서 작업
+* *Terminal#3에서 작업*
 
 
 [#kubectl-deploy-app]
@@ -297,7 +297,7 @@ oc label pod -l app=mypython inservice=mypods
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을  Pod(app=mypython)에 설정합니다.
 
 
-== Terminal#1에서 확인
+* *Terminal#1에서 확인*
 
 Poll the endpoint:
 
@@ -327,7 +327,7 @@ NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=m
 NOTE: 응답까지 조금 시간이 걸릴 수 있습니다.
 
 
-== Terminal#3에서 작업
+* *Terminal#3에서 작업*
 
 [#label-mynode]
 [.console-input]
@@ -338,7 +338,7 @@ oc label pod -l app=mynode inservice=mypods
 
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을  Pod(app=mynode)에 설정합니다.
 
-== Terminal#1에서 확인
+* *Terminal#1에서 확인*
 
 Poll the endpoint:
 
@@ -367,7 +367,7 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mypython)에서도 응답합니다.
 
 
-== Terminal#3에서 작업
+* *Terminal#3에서 작업*
 
 [#label-mygo]
 [.console-input]
@@ -379,7 +379,7 @@ oc label pod -l app=mygo inservice=mypods
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을  Pod(app=mygo)에 설정합니다.
 
 
-== Terminal#1에서 확인
+* *Terminal#1에서 확인*
 
 Poll the endpoint:
 
@@ -406,7 +406,7 @@ Python Hello on mypython-deployment-6874f84d85-2kpjl
 NOTE: 현재 Service가 참조하는 label(inservice=mypods)을 가진 Pod(app=mygo)에서도 응답합니다.
 
 
-== Terminal#3에서 확인
+* *Terminal#3에서 확인*
 
 [#get-endpoints2]
 [.console-input]
