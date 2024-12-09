@@ -134,7 +134,7 @@ spec:
 
 
 
-== Terminal#1 에서 실행
+* *Terminal#1 에서 실행*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -184,7 +184,7 @@ whale-say-job-m8vxt  0/1    Completed  85s  devnation-m02
 
 다른 Kubernetes 리소스처럼 `Job` 리소스를 확인하실 수 있습니다.
 
-== Terminal#1에서 작업
+* *Terminal#1에서 작업*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -238,7 +238,7 @@ TIP:
 === Clean Up
 
 
-== Terminal#1에서 작업
+* *Terminal#1에서 작업*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -282,7 +282,7 @@ spec:
 <.> 여기서는 `cronjob`에 의해 생성된 `jobs` 및 `pods`에 적용할 자체 추가 라벨을 지정합니다.  'job-name' 라벨이 여전히 존재하더라도 모든 표시에 guid가 포함되어 있으므로 사전에 값이 무엇인지 예측할 수 없습니다.
 
 
-== Terminal#1 에서 수행
+* *Terminal#1 에서 수행*
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -311,7 +311,8 @@ EOF
 
 하지만 Terminal#2의 감시 창을 보면
 
-== Terminal#2에서 확인
+* *Terminal#2에서 확인*
+
 [.console-output]
 [source,bash]
 ----
@@ -322,7 +323,7 @@ NAME                  READY   STATUS      RESTARTS   AGE
 CronJob을 설정하는 동안 Pod가 실행되고 있지 않습니다(약 10초마다 한 번만 확인됩니다. 아래 경고 참조). +
 cronjob이 실행되기를 기다리는 동안 *터미널 1*을 사용하여 `cronjob`이 어떻게 실행되는지 확인할 수 있습니다. 
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -365,7 +366,7 @@ https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/[공식 Kube
 
 `describe` 하위 명령을 사용하여 cronjob을 살펴보겠습니다.  [CTRL+c]를 사용하여 `oc get cronjobs -w` 명령을 취소하고 다음으로 바꿉니다.
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -434,7 +435,7 @@ NOTE:
 일정이 활성화될 때마다 CronJob이 `작업`을 생성(이후 포드 생성)한다는 점에 유의하는 것이 중요합니다.
 
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -529,7 +530,7 @@ oc logs -l job-name --tail=-1
 
 === Clean Up
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 --
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
