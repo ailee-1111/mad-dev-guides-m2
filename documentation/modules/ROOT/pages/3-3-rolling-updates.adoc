@@ -116,7 +116,9 @@ EOF
 
 
 
-== Terminal#1에서 작업 : Pod를 지켜보세요.
+* *Terminal#1에서 작업*
+
+Pod를 지켜보세요.
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -146,7 +148,9 @@ watch -n 1 -- oc get pods
 
 
 
-== Terminal#2에서 작업 : 반복적으로 서비스에 curl을 시도하세요.
+* *Terminal#2에서 작업* 
+
+반복적으로 서비스에 curl을 시도하세요.
 
 
 [#kubectl-deploy-app]
@@ -196,7 +200,9 @@ done
 
 
 
-== Terminal#3에서 작업 : 명령을 실행합니다.
+* *Terminal#3에서 작업*
+
+명령을 실행합니다.
 
 
 
