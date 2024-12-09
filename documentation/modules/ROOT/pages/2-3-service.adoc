@@ -219,7 +219,7 @@ Supersonic Subatomic Java with Quarkus quarkus-demo-deployment-5979886fb7-grf59:
 인그레스는 Route(RHOCP 리소스)와 동일한 기능을 몇 가지 제공하는 Kubernetes 리소스입니다. 인그레스 오브젝트는 외부 요청을 수락하고 경로를 기반으로 요청을 전송합니다. HTTP, HTTPS, SNI(서버 이름 확인)및 TLS(SNI 사용) 트래픽 유형만 허용할 수 있습니다. 표준 Kubernetes 인그레스 리소스는 일반적으로 최소입니다. TLS 종료, 경로 리디렉션, 고정 세션 등 애플리케이션이 사용하는 많은 일반 기능은 인그레스 컨트롤러에 따라 다릅니다. Kubernetes는 구성 구문을 정의하지 않습니다. RHOCP에서는 인그레스 오브젝트에서 지정하는 조건을 충족하기 위해 경로를 생성합니다.
 
 
-== Ingress
+=== Ingress
 
 [#create-ingress]
 [.console-input]
@@ -274,7 +274,7 @@ RHOCP는 외부 네트워크에 애플리케이션을 노출하기 위한 route 
 경로(Route)는 인그레스 트래픽을 클러스터의 서비스에 제공합니다. 경로(Route)는 Kubernetes 인그레스 오브젝트보다 먼저 생성되었으며 더 많은 기능을 제공합니다. 경로(Route)는 TLS 재암호화, TLS 패스스루, 파랑-녹색 배포를 위한 트래픽 분할 등 표준 인터페이스를 통해 Kubernetes 인그레스 컨트롤러에서는 지원되지 않을 수도 있는 고급 기능을 제공합니다.
 
 
-== OpenShift Route
+=== OpenShift Route
 
 이름 충돌을 방지하려면 수동으로 생성된 Ingress를 삭제하세요.  OpenShift Route는 기본 Ingress의 ha-proxy를 활용합니다.
 
