@@ -197,7 +197,7 @@ oc logs my-deployment-5dc67997c7-m7z9f -f
 
 아래는  *다른 터미널(Terminal#2)*에서 실행하세요.:
 
-== Terminal#2에서 수행
+* *Terminal#2에서 수행*
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -241,7 +241,7 @@ NOTE: [ctrl+c]를 입력하여 pod 명령어 실행(쉘) 모드를 종료할 수
 
 *다른 터미널(Terminal#3)* 에서 'my-deployment'에 대한 서비스를 배포하세요.:
 
-== Terminal#3에서 수행
+* *Terminal#3에서 수행*
 
 [#kubectl-deploy-app]
 [.console-input]
@@ -310,7 +310,7 @@ done
 그런 다음 -f 옵션을 사용하여 Pod의 실시간 로그를 봅니다.:
 
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 
 
 [#logs-log-deployment-follow]
