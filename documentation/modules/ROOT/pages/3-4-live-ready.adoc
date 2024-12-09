@@ -332,7 +332,9 @@ oc scale deployment myboot --replicas=3
 
 
 
-== Terminal#2에서 작업 : 반복적으로 서비스에 curl을 시도하세요.
+* *Terminal#2에서 작업*
+
+반복적으로 서비스에 curl을 시도하세요.
 
 
 [#kubectl-deploy-app]
@@ -378,7 +380,8 @@ done
 ----
 
 
-== Terminal#1에서 작업 
+* *Terminal#1에서 작업*
+
 
 이미지를 변경하세요.
 
@@ -392,7 +395,8 @@ oc set image deployment/myboot myboot=quay.io/rhdevelopers/myboot:v2
 오류 없는 롤링 업데이트를 확인하세요.
 
 
-== Terminal#2에서 확인
+* *Terminal#2에서 확인*
+
 
 [.console-output]
 [source.bash]
@@ -408,7 +412,7 @@ Aloha from Spring Boot! 137 on myboot-845968c6ff-9wvt9
 Bonjour from Spring Boot! 3 on myboot-8449d5468d-m88z4
 ----
 
-== Terminal#1에서 작업
+* *Terminal#1에서 작업*
 
 서비스의 일부인 Pod를 확인하려면 엔드포인트를 살펴보세요.
 
