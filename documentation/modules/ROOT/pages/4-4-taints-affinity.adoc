@@ -401,7 +401,7 @@ No resources found in myspace namespace.
 무슨 일이 일어나고 있는지 관찰할 수 있도록 다른 Terminal#2를 열고 다양한 작업을 실행할 때 어떤 일이 일어나는지 `관찰`해 보겠습니다.
 
 
-=== Terminal#2에서 작업
+* *Terminal#2에서 작업*
 
 
 [.console-input]
@@ -477,7 +477,7 @@ color=blue는 단순히 오염을 식별하기 위한 키=값 쌍이고 NoSchedu
 
 
 
-== Terminal#1
+* *Terminal#1*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -843,7 +843,7 @@ NOTE:  `.items[0]`은 모든 포드를 요청하지만 목록에 요소가 하�
 
 
 
-==Terminal#1에서 수행
+* *Terminal#1에서 수행*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -871,7 +871,8 @@ myboot-7cbfbd9b89-wpddg   1/1     #Terminating#         65m   devnation-m02
 
 === Clean Up
 
-== Terminal#1에서 작업
+* *Terminal#1에서 작업*
+
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
@@ -1055,7 +1056,7 @@ oc label nodes ${NODE} color-
 
 그리고 watch 출력이 *변경되지 않고* 실행 중인 경우 포드가 계속 실행된다는 점을 확인하세요.
 
-== Terminal#2
+* *Terminal#2*
 
 [.console-output]
 [source,bash]
@@ -1136,7 +1137,7 @@ spec:
 <1> 노드 레이블 키입니다.  두 노드가 이 키로 레이블이 지정되고 동일한 값을 갖는 경우 스케줄러는 두 노드를 동일한 토폴로지에 있는 것으로 처리합니다.  이 경우 `hostname`은 노드마다 다른 레이블입니다.
 <2> 선호도는 'app=myboot' 라벨이 지정된 Pod와 관련됩니다.
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -1186,7 +1187,7 @@ myboot2-7c5f46cbc9-hwm2v  0/1    Pending  5h38m  <none>
 
 선호도 규칙과 일치하는 포드를 찾을 수 없어 'myboot2' 포드가 보류 중입니다. 이 문제를 해결하려면 'app=myboot' 라벨이 지정된 'myboot' 애플리케이션을 배포해 보겠습니다.
 
-== Terminal#1에서 수행
+* *Terminal#1에서 수행*
 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
@@ -1219,7 +1220,7 @@ EOF
 
 그러면 둘 다 시작되고 _동일한 노드_에서 실행되는 것을 볼 수 있습니다.
 
-== Terminal#2에서 확인
+* *Terminal#2에서 확인*
 
 [.console-output]
 [source,bash,subs="+quotes"]
