@@ -562,7 +562,7 @@ quarkus-statefulset-1   1/1     Running       0          7m49s
 상태 저장 세트 및 서비스를 사용할 때 이로 인해 문제가 발생할 수 있으므로 주의하세요.  위에서 생성한 서비스는 상태 저장 세트에서 해당 포드를 정확하게 참조했다는 점을 기억하세요.  지금 닿으려고 하면
 
 
-== Terminal#1에서 실행
+* *Terminal#1에서 실행*
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
