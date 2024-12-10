@@ -241,7 +241,7 @@ OpenShift 기능을 탐색할 때 OpenShift, Kubernetes, 컨테이너 기술에 
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc get pods -n globex-user1
+oc get pods -n codeserver-%userid%
 ----
 
 [.console-output]
@@ -256,7 +256,7 @@ codeserver-85f5475758-pxhvp   1/1     Running   0          3d7h
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc get pods -n codeserver-user1 --show-labels
+oc get pods -n codeserver-%userid% --show-labels
 ----
 
 [.console-output]
@@ -270,7 +270,7 @@ codeserver-85f5475758-pxhvp   1/1     Running   0          3d7h   app.kubernetes
 [.console-input]
 [source,bash,subs="+macros,+attributes"]
 ----
-oc get pods -n codeserver-user1 -o wide
+oc get pods -n codeserver-%userid% -o wide
 ----
 
 [.console-output]
@@ -281,9 +281,9 @@ codeserver-85f5475758-pxhvp   1/1     Running   0          3d7h   10.128.2.116  
 ----
 
 
-NOTE: `oc get pods -n codeserver-user1` : 해당 네임스페이스에서 실행 중인 pod의 정보를 출력합니다. +
-`oc get pods -n codeserver-user1 --show-labels` : 해당 네임스페이스에서 파드 정보를 출력하며, 파드에 적용된 라벨도 함께 표시합니다. +
-`oc get pods -n codeserver-user1 -o wide` : 파드의 정보를 좀 더 상세하게 출력합니다. 예를 들어, 노드의 이름과 IP 주소 등 추가 정보를 보여줍니다.
+NOTE: `oc get pods -n codeserver-%userid%` : 해당 네임스페이스에서 실행 중인 pod의 정보를 출력합니다. +
+`oc get pods -n codeserver-%userid% --show-labels` : 해당 네임스페이스에서 파드 정보를 출력하며, 파드에 적용된 라벨도 함께 표시합니다. +
+`oc get pods -n codeserver-%userid% -o wide` : 파드의 정보를 좀 더 상세하게 출력합니다. 예를 들어, 노드의 이름과 IP 주소 등 추가 정보를 보여줍니다.
 
 
 
